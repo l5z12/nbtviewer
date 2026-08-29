@@ -35,6 +35,8 @@
   "nbtviewer.status.overlay_source": "Overlay source: %s",
 
   "nbtviewer.error.no_target": "No %s to inspect",
+  "nbtviewer.error.no_entity": "No entity matching '%s'",
+  "nbtviewer.error.no_player": "No player named '%s'",
   "nbtviewer.chat.too_large": "NBT too large for chat (%s chars) — use '… gui' or '… copy'",
 
   "nbtviewer.config.title": "NBT Viewer — Options",

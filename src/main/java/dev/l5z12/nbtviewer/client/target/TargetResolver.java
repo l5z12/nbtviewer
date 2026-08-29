@@ -100,9 +100,15 @@ public final class TargetResolver {
         if (!Mc.hasWorld(client)) return null;
         Object hit = Mc.hit(client);
         if (Mc.hitType(hit) != Mc.HIT_BLOCK) return null;
+        return blockTargetAt(client, Mc.hitBlockPos(hit));
+    }
+
+    /** Build a block target at an explicit position (used by {@code /viewdata block <x> <y> <z>}). */
+    @Nullable
+    public static NbtTarget blockTargetAt(Object client, Object pos) {
+        if (!Mc.hasWorld(client) || pos == null) return null;
 
         Object world = Mc.world(client);
-        Object pos = Mc.hitBlockPos(hit);
         String id = Mc.blockId(world, pos);
 
         Object root = Nbt.newCompound();
@@ -133,8 +139,14 @@ public final class TargetResolver {
     @Nullable
     public static NbtTarget targetEntity(Object client) {
         if (!Mc.hasWorld(client)) return null;
-        Object entity = resolveEntity(client);
-        if (entity == null) return null;
+        return entityTarget(client, resolveEntity(client));
+    }
+
+    /** Build a target from a specific entity (used by {@code /viewdata entity <id|uuid|type>} and
+     * {@code /viewdata player <name>}). */
+    @Nullable
+    public static NbtTarget entityTarget(Object client, Object entity) {
+        if (entity == null || !Mc.hasWorld(client)) return null;
         TargetTracker.remember(entity);
 
         Object nbt = Nbt.entityToNbt(entity);

@@ -78,6 +78,18 @@ inspect an item straight from your inventory.
 ```
 `chat` prints coloured, pretty SNBT (capped to avoid flooding); `copy` puts SNBT on the clipboard.
 
+**Specify a target explicitly** (no line of sight needed — handy for things you can't aim at):
+```
+/viewdata entity <id|uuid|type>   by network id, UUID, or nearest of an entity type (minecraft:zombie)
+/viewdata entity @e[type=…,sort=nearest,limit=1]   a vanilla-style selector (see below)
+/viewdata player <name>           a player by name
+/viewdata block <x> <y> <z>       the block at coordinates
+```
+The selector is resolved client-side against loaded entities and supports `@s @p @a @r @e @n` with
+`type` (`!` negation; bare names get `minecraft:`), `name` (`!`, quotes), `distance` (`a..b`, `..b`,
+`a..`, or `n` as a max), `limit`, and `sort` = `nearest|furthest|random|arbitrary`. Options that need
+server state (scores, teams, gamemode, nbt, tags) are ignored; distance/sort are from you.
+
 ### Jade extension (optional)
 If [Jade](https://modrinth.com/mod/jade) is installed, the looked-at **block entity** and **entity**
 NBT is added to Jade's tooltip. Toggle each in Jade's own plugin-config screen. In singleplayer the

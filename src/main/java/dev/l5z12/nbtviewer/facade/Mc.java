@@ -412,6 +412,170 @@ public final class Mc {
         //?}
     }
 
+    // ---- explicit lookup by id / uuid / type / name / coords (for "/viewdata … <spec>")
+    public static Object blockPosOf(int x, int y, int z) {
+        return new BlockPos(x, y, z); // both mappings: new BlockPos(x, y, z), resolved via the guarded import
+    }
+
+    public static Object entityByNetworkId(Object client, int id) {
+        //? if yarn {
+        net.minecraft.client.world.ClientWorld world = ((MinecraftClient) client).world;
+        return world == null ? null : world.getEntityById(id);
+        //?} else {
+        /*net.minecraft.client.multiplayer.ClientLevel world = ((Minecraft) client).level;
+        return world == null ? null : world.getEntity(id);*/
+        //?}
+    }
+
+    public static Object entityByUuid(Object client, String uuid) {
+        java.util.UUID parsed;
+        try {
+            parsed = java.util.UUID.fromString(uuid);
+        } catch (IllegalArgumentException notAUuid) {
+            return null;
+        }
+        //? if yarn {
+        net.minecraft.client.world.ClientWorld world = ((MinecraftClient) client).world;
+        if (world == null) return null;
+        for (Entity e : world.getEntities()) {
+            if (e.getUuid().equals(parsed)) return e;
+        }
+        return null;
+        //?} else {
+        /*net.minecraft.client.multiplayer.ClientLevel world = ((Minecraft) client).level;
+        if (world == null) return null;
+        for (Entity e : world.entitiesForRendering()) {
+            if (e.getUUID().equals(parsed)) return e;
+        }
+        return null;*/
+        //?}
+    }
+
+    public static Object nearestEntityOfType(Object client, String typeId) {
+        Object playerObj = player(client);
+        if (playerObj == null) return null;
+        //? if yarn {
+        net.minecraft.client.world.ClientWorld world = ((MinecraftClient) client).world;
+        if (world == null) return null;
+        Entity self = (Entity) playerObj;
+        Entity best = null;
+        double bestSq = Double.MAX_VALUE;
+        for (Entity e : world.getEntities()) {
+            if (!Registries.ENTITY_TYPE.getId(e.getType()).toString().equals(typeId)) continue;
+            double sq = e.squaredDistanceTo(self);
+            if (sq < bestSq) {
+                bestSq = sq;
+                best = e;
+            }
+        }
+        return best;
+        //?} else {
+        /*net.minecraft.client.multiplayer.ClientLevel world = ((Minecraft) client).level;
+        if (world == null) return null;
+        Entity self = (Entity) playerObj;
+        Entity best = null;
+        double bestSq = Double.MAX_VALUE;
+        for (Entity e : world.entitiesForRendering()) {
+            if (!BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()).toString().equals(typeId)) continue;
+            double sq = e.distanceToSqr(self);
+            if (sq < bestSq) {
+                bestSq = sq;
+                best = e;
+            }
+        }
+        return best;*/
+        //?}
+    }
+
+    public static Object playerByName(Object client, String name) {
+        //? if yarn {
+        net.minecraft.client.world.ClientWorld world = ((MinecraftClient) client).world;
+        if (world == null) return null;
+        for (net.minecraft.entity.player.PlayerEntity p : world.getPlayers()) {
+            if (p.getName().getString().equalsIgnoreCase(name)) return p;
+        }
+        return null;
+        //?} else {
+        /*net.minecraft.client.multiplayer.ClientLevel world = ((Minecraft) client).level;
+        if (world == null) return null;
+        for (net.minecraft.world.entity.player.Player p : world.players()) {
+            if (p.getName().getString().equalsIgnoreCase(name)) return p;
+        }
+        return null;*/
+        //?}
+    }
+
+    /** Every currently-loaded entity (client world), as facade {@code Object}s. */
+    public static java.util.List<Object> allLoadedEntities(Object client) {
+        java.util.List<Object> out = new java.util.ArrayList<>();
+        //? if yarn {
+        net.minecraft.client.world.ClientWorld world = ((MinecraftClient) client).world;
+        if (world != null) {
+            for (Entity e : world.getEntities()) out.add(e);
+        }
+        //?} else {
+        /*net.minecraft.client.multiplayer.ClientLevel world = ((Minecraft) client).level;
+        if (world != null) {
+            for (Entity e : world.entitiesForRendering()) out.add(e);
+        }*/
+        //?}
+        return out;
+    }
+
+    /** Every player in the client world, as facade {@code Object}s. */
+    public static java.util.List<Object> allPlayers(Object client) {
+        java.util.List<Object> out = new java.util.ArrayList<>();
+        //? if yarn {
+        net.minecraft.client.world.ClientWorld world = ((MinecraftClient) client).world;
+        if (world != null) out.addAll(world.getPlayers());
+        //?} else {
+        /*net.minecraft.client.multiplayer.ClientLevel world = ((Minecraft) client).level;
+        if (world != null) out.addAll(world.players());*/
+        //?}
+        return out;
+    }
+
+    /** Distinct registry ids of currently-loaded entities (for command tab-completion). */
+    public static java.util.List<String> loadedEntityTypeIds(Object client) {
+        java.util.TreeSet<String> ids = new java.util.TreeSet<>();
+        //? if yarn {
+        net.minecraft.client.world.ClientWorld world = ((MinecraftClient) client).world;
+        if (world != null) {
+            for (Entity e : world.getEntities()) {
+                ids.add(Registries.ENTITY_TYPE.getId(e.getType()).toString());
+            }
+        }
+        //?} else {
+        /*net.minecraft.client.multiplayer.ClientLevel world = ((Minecraft) client).level;
+        if (world != null) {
+            for (Entity e : world.entitiesForRendering()) {
+                ids.add(BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()).toString());
+            }
+        }*/
+        //?}
+        return new java.util.ArrayList<>(ids);
+    }
+
+    public static java.util.List<String> onlinePlayerNames(Object client) {
+        java.util.List<String> names = new java.util.ArrayList<>();
+        //? if yarn {
+        net.minecraft.client.world.ClientWorld world = ((MinecraftClient) client).world;
+        if (world != null) {
+            for (net.minecraft.entity.player.PlayerEntity p : world.getPlayers()) {
+                names.add(p.getName().getString());
+            }
+        }
+        //?} else {
+        /*net.minecraft.client.multiplayer.ClientLevel world = ((Minecraft) client).level;
+        if (world != null) {
+            for (net.minecraft.world.entity.player.Player p : world.players()) {
+                names.add(p.getName().getString());
+            }
+        }*/
+        //?}
+        return names;
+    }
+
     // ---- client-command source (Fabric type; its methods still take the mapping's text type)
     public static void feedback(Object source, Object text) {
         //? if yarn {

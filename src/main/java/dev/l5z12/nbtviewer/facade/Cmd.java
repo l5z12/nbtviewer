@@ -23,4 +23,13 @@ public final class Cmd {
         /*return net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal(name);*/
         //?}
     }
+
+    public static <T> com.mojang.brigadier.builder.RequiredArgumentBuilder<FabricClientCommandSource, T> argument(
+            String name, com.mojang.brigadier.arguments.ArgumentType<T> type) {
+        //? if yarn {
+        return net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument(name, type);
+        //?} else {
+        /*return net.fabricmc.fabric.api.client.command.v2.ClientCommands.argument(name, type);*/
+        //?}
+    }
 }
