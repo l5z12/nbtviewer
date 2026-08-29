@@ -1,0 +1,31 @@
+# Gradle
+.gradle/
+build/
+versions/*/build/
+versions/*/.gradle/
+
+# Stonecutter
+.stonecutter/
+versions/*/src/main/generated/
+
+# Fabric Loom
+run/
+remappedSrc/
+
+# IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+bin/
+*.launch
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+*~

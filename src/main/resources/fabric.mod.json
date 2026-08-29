@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "nbtviewer",
+  "version": "${version}",
+  "name": "NBT Viewer",
+  "description": "View the NBT / data-component data the client receives for items, blocks and entities — no /data required. Configurable hotkeys, a searchable collapsible tree GUI, a HUD overlay, /viewdata commands, clipboard export and a Jade extension.",
+  "authors": [
+    "l5z12"
+  ],
+  "contact": {
+    "homepage": "https://modrinth.com/mod/nbtviewer",
+    "sources": "https://github.com/l5z12/nbtviewer"
+  },
+  "license": "GPL-3.0-or-later",
+  "icon": "assets/nbtviewer/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "dev.l5z12.nbtviewer.client.NbtViewerClient"
+    ],
+    "modmenu": [
+      "dev.l5z12.nbtviewer.client.integration.ModMenuIntegration"
+    ]
+  },
+  "accessWidener": "${accessWidener}",
+  "mixins": [],
+  "depends": {
+    "fabricloader": ">=${loaderDep}",
+    "minecraft": "${mcDep}",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "jade": "*",
+    "modmenu": "*"
+  }
+}

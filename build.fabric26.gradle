@@ -1,0 +1,62 @@
+// SPDX-FileCopyrightText: 2026 l5z12
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+// Node buildscript for unobfuscated Minecraft 26.x. 26.x ships official names (no yarn / no mappings
+// dependency) and needs the newer Mojmap-native Loom, whose DSL differs from the 1.x release Loom
+// (plain `implementation`, no `mappings` / `modImplementation`). Groovy avoids the Kotlin-DSL accessor
+// friction. Shared code comes from the Stonecutter-processed root src/ (its //? if yarn guards select
+// the Mojmap branch here) + common/.
+plugins {
+    id 'net.fabricmc.fabric-loom' version '1.16-SNAPSHOT'
+}
+
+base {
+    archivesName = project.property('mod.id')
+}
+version = "${project.property('mod.version')}+${stonecutter.current.version}"
+group = project.property('mod.group')
+
+repositories {
+    maven { url = 'https://maven.fabricmc.net/' }
+    maven { url = 'https://api.modrinth.com/maven'; content { includeGroup 'maven.modrinth' } }
+    mavenCentral()
+}
+
+sourceSets.main.java.srcDir("$rootDir/common/src/main/java")
+sourceSets.main.resources.srcDir("$rootDir/common/src/main/resources")
+
+dependencies {
+    minecraft "com.mojang:minecraft:${stonecutter.current.version}"
+    // Unobfuscated 26.x: no mappings dependency; plain implementation (Loom auto-remaps).
+    implementation "net.fabricmc:fabric-loader:${project.property('deps.fabric_loader')}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.property('deps.fabric_api')}"
+    compileOnly "maven.modrinth:jade:${project.property('deps.jade')}"
+    if (project.findProperty('deps.modmenu') != null) {
+        compileOnly "maven.modrinth:modmenu:${project.property('deps.modmenu')}"
+    }
+}
+
+loom {
+    // 26.x uses ClassTweaker (successor to AccessWidener); Loom still exposes it as accessWidenerPath.
+    accessWidenerPath = file("$rootDir/src/main/resources/nbtviewer.classtweaker")
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 21
+    it.options.encoding = 'UTF-8'
+}
+
+java {
+    withSourcesJar()
+    toolchain { languageVersion = JavaLanguageVersion.of(25) }
+}
+
+processResources {
+    def props = ['version': project.version, 'mcDep': stonecutter.current.version,
+                 'loaderDep': '0.16.0', 'accessWidener': 'nbtviewer.classtweaker']
+    inputs.properties props
+    filesMatching('fabric.mod.json') { expand props }
+    // Ship only the ClassTweaker on 26.x, never the yarn access widener.
+    exclude 'nbtviewer.accesswidener'
+}
