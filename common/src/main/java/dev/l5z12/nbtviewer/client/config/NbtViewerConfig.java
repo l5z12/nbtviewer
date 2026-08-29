@@ -33,6 +33,19 @@ public class NbtViewerConfig {
     public int autoExpandDepth = 2;
     public boolean guiPauseGame = false;
 
+    // ------------------------------------------------------------------ targeting robustness
+    // Entities move; a single-tick crosshair raycast often misses a fast/dodgy mob at the moment
+    // you press the key. These fallbacks recover the intended target.
+    /** Remember the last entity/block the crosshair was on for this many ms (0 = disabled), so a
+     * target that darts away just as you press the key is still resolved. */
+    public int stickyTargetMs = 2500;
+    /** If the crosshair isn't exactly on an entity, pick the nearest one within the look cone. */
+    public boolean nearestEntityFallback = true;
+    /** Reach (blocks) for the nearest-entity cone search. */
+    public double nearestEntityReach = 6.0;
+    /** Half-angle (degrees) of the look cone for the nearest-entity search. */
+    public double nearestEntityConeDegrees = 15.0;
+
     // ------------------------------------------------------------------ Jade extension
     public boolean jadeEnabled = true;
     /** In singleplayer, ask the integrated server for the full block-entity NBT. */
@@ -50,6 +63,9 @@ public class NbtViewerConfig {
         chatMaxChars = clamp(chatMaxChars, 500, 100_000);
         autoExpandDepth = clamp(autoExpandDepth, 0, 20);
         jadeMaxLines = clamp(jadeMaxLines, 1, 200);
+        stickyTargetMs = clamp(stickyTargetMs, 0, 30_000);
+        nearestEntityReach = Math.max(1.0, Math.min(24.0, nearestEntityReach));
+        nearestEntityConeDegrees = Math.max(1.0, Math.min(89.0, nearestEntityConeDegrees));
         if (overlayCorner == null) overlayCorner = OverlayCorner.TOP_LEFT;
         if (overlaySource == null) overlaySource = HudSource.AUTO;
         if (overlayVisibility == null) overlayVisibility = OverlayVisibility.KEY_HELD;

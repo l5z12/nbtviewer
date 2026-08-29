@@ -17,6 +17,7 @@ import dev.l5z12.nbtviewer.client.keybind.NbtKeyBindings;
 import dev.l5z12.nbtviewer.client.nbt.NbtFormat;
 import dev.l5z12.nbtviewer.client.target.NbtTarget;
 import dev.l5z12.nbtviewer.client.target.TargetResolver;
+import dev.l5z12.nbtviewer.client.target.TargetTracker;
 import dev.l5z12.nbtviewer.facade.Mc;
 import dev.l5z12.nbtviewer.facade.Txt;
 import net.fabricmc.api.ClientModInitializer;
@@ -58,6 +59,8 @@ public final class NbtViewerClient implements ClientModInitializer {
         if (Mc.player(client) == null) {
             return;
         }
+        // Keep a short memory of the crosshair target so a moving entity can still be inspected.
+        TargetTracker.tick(client);
         while (NbtKeyBindings.wasPressed(NbtKeyBindings.openAuto)) openFor(client, HudSource.AUTO);
         while (NbtKeyBindings.wasPressed(NbtKeyBindings.openHeldItem)) openFor(client, HudSource.HELD_ITEM);
         while (NbtKeyBindings.wasPressed(NbtKeyBindings.openHoveredSlot)) openFor(client, HudSource.HOVERED_SLOT);

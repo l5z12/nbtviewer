@@ -358,6 +358,60 @@ public final class Mc {
         return ((Entity) entity).getZ();
     }
 
+    public static boolean entityAlive(Object entity) {
+        return entity != null && ((Entity) entity).isAlive();
+    }
+
+    /**
+     * Nearest living entity within {@code reach} blocks whose direction from the eye is within
+     * {@code coneDegrees} of the look vector, or {@code null}. Used as a fallback when the exact
+     * crosshair ray misses a moving entity.
+     */
+    public static Object pickEntityInView(Object client, double reach, double coneDegrees) {
+        double cosThreshold = Math.cos(Math.toRadians(coneDegrees));
+        //? if yarn {
+        MinecraftClient mc = (MinecraftClient) client;
+        Entity camera = mc.getCameraEntity();
+        if (camera == null || mc.world == null) return null;
+        net.minecraft.util.math.Vec3d eye = camera.getEyePos();
+        net.minecraft.util.math.Vec3d look = camera.getRotationVec(1.0f);
+        net.minecraft.util.math.Box search = camera.getBoundingBox().stretch(look.multiply(reach)).expand(1.0);
+        Entity best = null;
+        double bestDist = Double.MAX_VALUE;
+        for (Entity e : mc.world.getOtherEntities(camera, search, Entity::isAlive)) {
+            net.minecraft.util.math.Vec3d toEntity = e.getBoundingBox().getCenter().subtract(eye);
+            double dist = toEntity.length();
+            if (dist > reach + 1.0 || dist < 1.0e-4) continue;
+            if (toEntity.normalize().dotProduct(look) < cosThreshold) continue;
+            if (dist < bestDist) {
+                bestDist = dist;
+                best = e;
+            }
+        }
+        return best;
+        //?} else {
+        /*Minecraft mc = (Minecraft) client;
+        Entity camera = mc.getCameraEntity();
+        if (camera == null || mc.level == null) return null;
+        net.minecraft.world.phys.Vec3 eye = camera.getEyePosition();
+        net.minecraft.world.phys.Vec3 look = camera.getViewVector(1.0f);
+        net.minecraft.world.phys.AABB search = camera.getBoundingBox().expandTowards(look.scale(reach)).inflate(1.0);
+        Entity best = null;
+        double bestDist = Double.MAX_VALUE;
+        for (Entity e : mc.level.getEntities(camera, search, Entity::isAlive)) {
+            net.minecraft.world.phys.Vec3 toEntity = e.getBoundingBox().getCenter().subtract(eye);
+            double dist = toEntity.length();
+            if (dist > reach + 1.0 || dist < 1.0e-4) continue;
+            if (toEntity.normalize().dot(look) < cosThreshold) continue;
+            if (dist < bestDist) {
+                bestDist = dist;
+                best = e;
+            }
+        }
+        return best;*/
+        //?}
+    }
+
     // ---- client-command source (Fabric type; its methods still take the mapping's text type)
     public static void feedback(Object source, Object text) {
         //? if yarn {

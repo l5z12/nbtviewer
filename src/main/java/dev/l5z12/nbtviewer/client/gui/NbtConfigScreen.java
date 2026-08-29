@@ -56,6 +56,8 @@ public final class NbtConfigScreen extends NbtScreenBase {
         option(rightCol, ry += rowH, colW, () -> onOff("nbtviewer.config.gui_pause", c.guiPauseGame), () -> c.guiPauseGame = !c.guiPauseGame);
         option(rightCol, ry += rowH, colW, () -> onOff("nbtviewer.config.jade", c.jadeEnabled), () -> c.jadeEnabled = !c.jadeEnabled);
         option(rightCol, ry += rowH, colW, () -> onOff("nbtviewer.config.jade_sync", c.jadeSyncFullBlockData), () -> c.jadeSyncFullBlockData = !c.jadeSyncFullBlockData);
+        option(rightCol, ry += rowH, colW, () -> onOff("nbtviewer.config.nearest_entity", c.nearestEntityFallback), () -> c.nearestEntityFallback = !c.nearestEntityFallback);
+        option(rightCol, ry += rowH, colW, () -> value("nbtviewer.config.sticky", stickyLabel()), () -> c.stickyTargetMs = cycleSticky(c.stickyTargetMs));
 
         addWidget(Ui.button(Txt.translatable("nbtviewer.config.done"),
                 this.width / 2 - 100, this.height - 28, 200, 20, this::closeSelf));
@@ -76,6 +78,21 @@ public final class NbtConfigScreen extends NbtScreenBase {
             if (v > current) return v;
         }
         return LINE_PRESETS[0];
+    }
+
+    private static final int[] STICKY_PRESETS = {0, 1000, 2000, 2500, 3000, 5000};
+
+    private String stickyLabel() {
+        return c.stickyTargetMs == 0
+                ? "OFF"
+                : String.format(java.util.Locale.ROOT, "%.1fs", c.stickyTargetMs / 1000.0);
+    }
+
+    private static int cycleSticky(int current) {
+        for (int v : STICKY_PRESETS) {
+            if (v > current) return v;
+        }
+        return STICKY_PRESETS[0];
     }
 
     private static double cycleScale(double current) {

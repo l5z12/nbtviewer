@@ -52,5 +52,7 @@
   "nbtviewer.config.gui_pause": "Pause game in viewer",
   "nbtviewer.config.jade": "Jade extension",
   "nbtviewer.config.jade_sync": "Jade: sync full NBT (SP)",
+  "nbtviewer.config.nearest_entity": "Nearest-entity fallback",
+  "nbtviewer.config.sticky": "Sticky target",
   "nbtviewer.config.done": "Done"
 }

@@ -9,7 +9,9 @@ import java.util.Map;
 
 import org.jetbrains.annotations.Nullable;
 
+import dev.l5z12.nbtviewer.client.config.ConfigManager;
 import dev.l5z12.nbtviewer.client.config.HudSource;
+import dev.l5z12.nbtviewer.client.config.NbtViewerConfig;
 import dev.l5z12.nbtviewer.facade.Mc;
 import dev.l5z12.nbtviewer.facade.Nbt;
 
@@ -43,14 +45,15 @@ public final class TargetResolver {
         NbtTarget slot = hoveredSlot(client);
         if (slot != null) return slot;
 
-        Object hit = Mc.hit(client);
-        int type = Mc.hitType(hit);
-        if (type == Mc.HIT_ENTITY) {
-            NbtTarget entity = targetEntity(client);
-            if (entity != null) return entity;
-        } else if (type == Mc.HIT_BLOCK) {
+        int type = Mc.hitType(Mc.hit(client));
+        if (type == Mc.HIT_BLOCK) {
             NbtTarget block = targetBlock(client);
             if (block != null) return block;
+        } else {
+            // A live entity hit, or no hit at all — either way try the entity path, which includes
+            // the cone + sticky fallbacks for a target that just moved out of the crosshair ray.
+            NbtTarget entity = targetEntity(client);
+            if (entity != null) return entity;
         }
         return heldItem(client);
     }
@@ -130,10 +133,10 @@ public final class TargetResolver {
     @Nullable
     public static NbtTarget targetEntity(Object client) {
         if (!Mc.hasWorld(client)) return null;
-        Object hit = Mc.hit(client);
-        if (Mc.hitType(hit) != Mc.HIT_ENTITY) return null;
+        Object entity = resolveEntity(client);
+        if (entity == null) return null;
+        TargetTracker.remember(entity);
 
-        Object entity = Mc.hitEntity(hit);
         Object nbt = Nbt.entityToNbt(entity);
 
         Object root = Nbt.newCompound();
@@ -147,6 +150,30 @@ public final class TargetResolver {
         if (nbt != null && !Nbt.compoundEmpty(nbt)) Nbt.put(root, "data", nbt);
 
         return new NbtTarget(NbtTarget.Kind.ENTITY, Mc.entityName(entity), Mc.entityTypeString(entity), root);
+    }
+
+    /**
+     * The entity to inspect, most-reliable source first: the live crosshair entity, else the nearest
+     * entity within the look cone, else the last entity the crosshair was on (sticky window). The
+     * latter two recover a target that moved out of the exact raycast as the key was pressed.
+     */
+    @Nullable
+    private static Object resolveEntity(Object client) {
+        NbtViewerConfig cfg = ConfigManager.get();
+
+        Object hit = Mc.hit(client);
+        if (Mc.hitType(hit) == Mc.HIT_ENTITY) {
+            return Mc.hitEntity(hit);
+        }
+        if (cfg.nearestEntityFallback) {
+            Object near = Mc.pickEntityInView(client, cfg.nearestEntityReach, cfg.nearestEntityConeDegrees);
+            if (near != null) return near;
+        }
+        if (cfg.stickyTargetMs > 0) {
+            Object recent = TargetTracker.recentEntity(cfg.stickyTargetMs);
+            if (recent != null) return recent;
+        }
+        return null;
     }
 
     private static String fmt(double d) {

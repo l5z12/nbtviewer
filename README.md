@@ -26,6 +26,11 @@ mod it can pull the full block-entity & entity NBT.
 ### Inspect anything
 - **Held item**, **item under the cursor in any container** (inventory, chest, shulker, …),
   **targeted block / block entity**, and **targeted entity**.
+- **Robust targeting for moving entities** — a single-tick crosshair raycast often misses a fast or
+  dodgy mob the instant you press the key, so entity targeting also falls back to (1) the nearest
+  entity within your look cone, then (2) the last entity the crosshair was on within a short sticky
+  window. Both are configurable (or off); see *Nearest-entity fallback* / *Sticky target* in the
+  options.
 - Everything is the *client-visible* NBT — no `/data`, no operator permissions.
 - For blocks you also get the block id, blockstate `properties`, position and the block-entity NBT
   combined into one view.
