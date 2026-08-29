@@ -1,0 +1,50 @@
+# SPDX-FileCopyrightText: 2026 l5z12
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+name: Build all
+
+# Full matrix — every one of the 21 nodes. Manual only: the routine push/PR check
+# (build.yml) already covers every guard boundary, so run this before a release or
+# when you want to verify the whole ladder end to end.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # yarn nodes (obfuscated) — JDK 21 targets release 17/21
+          - { mc: "1.20",    java: "21" }
+          - { mc: "1.20.1",  java: "21" }
+          - { mc: "1.20.2",  java: "21" }
+          - { mc: "1.20.3",  java: "21" }
+          - { mc: "1.20.4",  java: "21" }
+          - { mc: "1.20.5",  java: "21" }
+          - { mc: "1.20.6",  java: "21" }
+          - { mc: "1.21",    java: "21" }
+          - { mc: "1.21.1",  java: "21" }
+          - { mc: "1.21.2",  java: "21" }
+          - { mc: "1.21.3",  java: "21" }
+          - { mc: "1.21.4",  java: "21" }
+          - { mc: "1.21.5",  java: "21" }
+          - { mc: "1.21.6",  java: "21" }
+          - { mc: "1.21.7",  java: "21" }
+          - { mc: "1.21.8",  java: "21" }
+          - { mc: "1.21.9",  java: "21" }
+          - { mc: "1.21.10", java: "21" }
+          - { mc: "1.21.11", java: "21" }
+          # Mojmap nodes (official names) — JDK 25 toolchain
+          - { mc: "26.1",    java: "25" }
+          - { mc: "26.2",    java: "25" }
+    uses: ./.github/workflows/_build.yml
+    with:
+      mc: ${{ matrix.mc }}
+      java: ${{ matrix.java }}
+      # Don't let 21 nodes evict the routine subset's warm caches.
+      cache-read-only: true

@@ -18,64 +18,23 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Fast routine check: one node per //? if guard boundary (covers every branch in the
+# codebase) rather than all 21. Run the full matrix from build-all.yml on demand.
 jobs:
   build:
-    name: ${{ matrix.mc }}
-    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
-          # yarn nodes (obfuscated) — Loom 1.17.20, JDK 21 targets release 17/21
-          - { mc: "1.20",    java: "21" }
-          - { mc: "1.20.1",  java: "21" }
-          - { mc: "1.20.2",  java: "21" }
-          - { mc: "1.20.3",  java: "21" }
-          - { mc: "1.20.4",  java: "21" }
-          - { mc: "1.20.5",  java: "21" }
-          - { mc: "1.20.6",  java: "21" }
-          - { mc: "1.21",    java: "21" }
-          - { mc: "1.21.1",  java: "21" }
-          - { mc: "1.21.2",  java: "21" }
-          - { mc: "1.21.3",  java: "21" }
-          - { mc: "1.21.4",  java: "21" }
-          - { mc: "1.21.5",  java: "21" }
-          - { mc: "1.21.6",  java: "21" }
-          - { mc: "1.21.7",  java: "21" }
-          - { mc: "1.21.8",  java: "21" }
-          - { mc: "1.21.9",  java: "21" }
-          - { mc: "1.21.10", java: "21" }
-          - { mc: "1.21.11", java: "21" }
-          # Mojmap nodes (official names) — Mojmap-native Loom, JDK 25 toolchain
-          - { mc: "26.1",    java: "25" }
-          - { mc: "26.2",    java: "25" }
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up JDK ${{ matrix.java }}
-        uses: actions/setup-java@v4
-        with:
-          distribution: zulu
-          java-version: ${{ matrix.java }}
-
-      - name: Ensure no build proxy leaks in
-        # The proxy the author uses locally lives in their Gradle user home, not in the repo.
-        # This is a defensive no-op that strips any proxy a contributor might have added to
-        # gradle.properties by mistake — runners have direct internet.
-        run: sed -i '/proxyHost/d;/proxyPort/d' gradle.properties
-
-      - name: Set up Gradle (dependency + build cache)
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Build ${{ matrix.mc }}-fabric
-        run: |
-          chmod +x gradlew
-          ./gradlew :${{ matrix.mc }}-fabric:build --stacktrace
-
-      - name: Upload ${{ matrix.mc }} jar
-        uses: actions/upload-artifact@v4
-        with:
-          name: nbtviewer-${{ matrix.mc }}
-          path: versions/${{ matrix.mc }}-fabric/build/libs/*.jar
-          if-no-files-found: error
+          - { mc: "1.20.1",  java: "21" }   # pre-1.20.5: writeNbt, new Identifier
+          - { mc: "1.20.5",  java: "21" }   # data components: ItemStack.CODEC, Identifier.of
+          - { mc: "1.21.5",  java: "21" }   # getCompound -> Optional
+          - { mc: "1.21.6",  java: "21" }   # Matrix3x2fStack, createNbtWithIdentifyingData, WriteView
+          - { mc: "1.21.9",  java: "21" }   # KeyInput/Click, KeyBinding.Category, 6-arg scroll
+          - { mc: "1.21.11", java: "21" }   # latest yarn
+          - { mc: "26.1",    java: "25" }   # Mojmap
+          - { mc: "26.2",    java: "25" }   # latest Mojmap
+    uses: ./.github/workflows/_build.yml
+    with:
+      mc: ${{ matrix.mc }}
+      java: ${{ matrix.java }}

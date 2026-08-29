@@ -1,0 +1,64 @@
+# SPDX-FileCopyrightText: 2026 l5z12
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Reusable single-node build. Called by build.yml (subset) and build-all.yml (full matrix)
+# so the actual steps live in one place. Not triggered on its own.
+name: build-node
+
+on:
+  workflow_call:
+    inputs:
+      mc:
+        description: Minecraft version (node = <mc>-fabric)
+        required: true
+        type: string
+      java:
+        description: JDK to run Gradle on (21 for yarn, 25 for 26.x)
+        required: true
+        type: string
+      cache-read-only:
+        description: Read the Gradle cache but do not write it (used by the full matrix)
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ inputs.mc }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ inputs.java }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: ${{ inputs.java }}
+
+      - name: Ensure no build proxy leaks in
+        # The proxy the author uses locally lives in their Gradle user home, not in the repo.
+        # Defensive no-op that strips any proxy a contributor might have added by mistake.
+        run: sed -i '/proxyHost/d;/proxyPort/d' gradle.properties
+
+      - name: Set up Gradle (dependency + build cache)
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ inputs.cache-read-only }}
+
+      - name: Build ${{ inputs.mc }}-fabric
+        # configure-on-demand (set in gradle.properties) keeps this to the one node.
+        run: |
+          chmod +x gradlew
+          ./gradlew :${{ inputs.mc }}-fabric:build --stacktrace
+
+      - name: Upload ${{ inputs.mc }} jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: nbtviewer-${{ inputs.mc }}
+          path: versions/${{ inputs.mc }}-fabric/build/libs/*.jar
+          if-no-files-found: error
