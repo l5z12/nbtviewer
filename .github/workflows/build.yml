@@ -59,9 +59,10 @@ jobs:
           distribution: zulu
           java-version: ${{ matrix.java }}
 
-      - name: Drop the local build proxy
-        # gradle.properties routes downloads through a local Clash proxy (127.0.0.1:7890)
-        # for the author's machine; CI runners have direct internet, so strip those lines.
+      - name: Ensure no build proxy leaks in
+        # The proxy the author uses locally lives in their Gradle user home, not in the repo.
+        # This is a defensive no-op that strips any proxy a contributor might have added to
+        # gradle.properties by mistake — runners have direct internet.
         run: sed -i '/proxyHost/d;/proxyPort/d' gradle.properties
 
       - name: Set up Gradle (dependency + build cache)

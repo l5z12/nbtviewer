@@ -86,12 +86,22 @@ full server-side NBT is synced; on servers it falls back to client-visible data.
 
 ## Building
 
-Requirements: **JDK 21** (for 1.21.x; JDK 17 also works for 1.20.1). The Gradle wrapper handles the
-rest. Dependencies are fetched through the local proxy **`http://127.0.0.1:7890`** (already set in
-`gradle.properties`).
+Requirements: **JDK 21** (yarn nodes 1.20 – 1.21.11) and **JDK 25** (26.x nodes). The Gradle wrapper
+handles the rest.
 
-The Gradle **wrapper bootstrap** downloads its distribution before it reads `gradle.properties`, so
-pass the proxy to it via `GRADLE_OPTS` the first time:
+**Behind a proxy?** Proxy settings are deliberately *not* committed (so CI and other contributors
+aren't forced onto a localhost proxy). If your network needs one, put it in your **Gradle user home**
+(`~/.gradle/gradle.properties`) so every build picks it up:
+
+```properties
+systemProp.http.proxyHost=127.0.0.1
+systemProp.http.proxyPort=7890
+systemProp.https.proxyHost=127.0.0.1
+systemProp.https.proxyPort=7890
+```
+
+The Gradle **wrapper bootstrap** downloads its distribution before it reads any `gradle.properties`,
+so the first run also needs the proxy via `GRADLE_OPTS`:
 
 ```bash
 export GRADLE_OPTS="-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=7890 \
