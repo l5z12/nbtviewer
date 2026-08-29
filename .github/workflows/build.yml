@@ -7,7 +7,14 @@ name: Build
 on:
   push:
     branches: [main]
+    paths-ignore: &docs
+      - "**.md"
+      - "LICENSE"
+      - ".gitignore"
+      - ".gitattributes"
+      - "scripts/**"
   pull_request:
+    paths-ignore: *docs
   workflow_dispatch:
 
 permissions:
