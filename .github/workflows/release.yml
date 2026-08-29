@@ -1,0 +1,76 @@
+# SPDX-FileCopyrightText: 2026 l5z12
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+name: Release
+
+# Cut a release by pushing a version tag, e.g.:  git tag v1.0.0 && git push origin v1.0.0
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  # Build every node (fresh jars for the tagged commit). cache-read-only so a rare
+  # release doesn't churn the routine build caches.
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { mc: "1.20",    java: "21" }
+          - { mc: "1.20.1",  java: "21" }
+          - { mc: "1.20.2",  java: "21" }
+          - { mc: "1.20.3",  java: "21" }
+          - { mc: "1.20.4",  java: "21" }
+          - { mc: "1.20.5",  java: "21" }
+          - { mc: "1.20.6",  java: "21" }
+          - { mc: "1.21",    java: "21" }
+          - { mc: "1.21.1",  java: "21" }
+          - { mc: "1.21.2",  java: "21" }
+          - { mc: "1.21.3",  java: "21" }
+          - { mc: "1.21.4",  java: "21" }
+          - { mc: "1.21.5",  java: "21" }
+          - { mc: "1.21.6",  java: "21" }
+          - { mc: "1.21.7",  java: "21" }
+          - { mc: "1.21.8",  java: "21" }
+          - { mc: "1.21.9",  java: "21" }
+          - { mc: "1.21.10", java: "21" }
+          - { mc: "1.21.11", java: "21" }
+          - { mc: "26.1",    java: "25" }
+          - { mc: "26.2",    java: "25" }
+    uses: ./.github/workflows/_build.yml
+    with:
+      mc: ${{ matrix.mc }}
+      java: ${{ matrix.java }}
+      cache-read-only: true
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # create the release + upload assets
+    steps:
+      - name: Download all built jars
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Collect mod jars
+        run: |
+          mkdir -p release
+          find artifacts -name 'nbtviewer-*.jar' ! -name '*-sources.jar' -exec cp {} release/ \;
+          echo "Assets to attach:"
+          ls -1 release
+          test -n "$(ls -A release)" || { echo "No jars found"; exit 1; }
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          flags=(--repo "${GITHUB_REPOSITORY}" --title "${GITHUB_REF_NAME}" --generate-notes)
+          # A hyphenated tag (v1.0.0-rc1, v1.0.0-beta) is marked as a pre-release.
+          case "${GITHUB_REF_NAME}" in *-*) flags+=(--prerelease) ;; esac
+          gh release create "${GITHUB_REF_NAME}" release/*.jar "${flags[@]}"
