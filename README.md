@@ -90,6 +90,10 @@ The selector is resolved client-side against loaded entities and supports `@s @p
 `a..`, or `n` as a max), `limit`, and `sort` = `nearest|furthest|random|arbitrary`. Options that need
 server state (scores, teams, gamemode, nbt, tags) are ignored; distance/sort are from you.
 
+When a selector or a bare type matches **more than one** entity, a **picker** opens — a scrollable
+list (name · type · distance) you click, or navigate with `↑↓` and `Enter`, to choose which to
+inspect. A single match opens the tree view directly.
+
 ### Jade extension (optional)
 If [Jade](https://modrinth.com/mod/jade) is installed, the looked-at **block entity** and **entity**
 NBT is added to Jade's tooltip. Toggle each in Jade's own plugin-config screen. In singleplayer the

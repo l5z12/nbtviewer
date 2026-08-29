@@ -22,6 +22,7 @@ import dev.l5z12.nbtviewer.client.config.CopyFormat;
 import dev.l5z12.nbtviewer.client.config.HudSource;
 import dev.l5z12.nbtviewer.client.config.NbtViewerConfig;
 import dev.l5z12.nbtviewer.client.gui.NbtConfigScreen;
+import dev.l5z12.nbtviewer.client.gui.NbtPickerScreen;
 import dev.l5z12.nbtviewer.client.gui.NbtViewerScreen;
 import dev.l5z12.nbtviewer.client.nbt.NbtFormat;
 import dev.l5z12.nbtviewer.client.nbt.NbtText;
@@ -174,30 +175,70 @@ public final class ViewDataCommand {
 
     private static int runEntitySpec(FabricClientCommandSource source, String spec) {
         Object client = Mc.client();
-        Object entity = resolveEntitySpec(client, spec.trim());
-        if (entity == null) {
+        List<Object> matches = resolveEntities(client, spec.trim());
+        if (matches.isEmpty()) {
             Mc.cmdError(source, Txt.translatable("nbtviewer.error.no_entity", spec));
             return 0;
         }
-        return openTarget(source, client, TargetResolver.entityTarget(client, entity), spec);
+        if (matches.size() == 1) {
+            return openTarget(source, client, TargetResolver.entityTarget(client, matches.get(0)), spec);
+        }
+        // Several candidates — let the player pick one.
+        Object title = Txt.translatable("nbtviewer.picker.title", spec);
+        List<NbtPickerScreen.Choice> choices = new java.util.ArrayList<>();
+        for (Object e : matches) {
+            final Object entity = e;
+            final Object label = pickerLabel(client, entity);
+            choices.add(new NbtPickerScreen.Choice() {
+                @Override
+                public Object label() {
+                    return label;
+                }
+
+                @Override
+                public NbtTarget build() {
+                    return Mc.entityAlive(entity) ? TargetResolver.entityTarget(client, entity) : null;
+                }
+            });
+        }
+        Mc.execute(client, () -> Mc.setScreen(client, new NbtPickerScreen(null, title, choices)));
+        return 1;
     }
 
-    /** A network id, a UUID, an entity-type id (nearest of that type), or a vanilla selector. */
-    private static Object resolveEntitySpec(Object client, String spec) {
+    /** All entities matching the spec: a selector's results, the single network-id/UUID entity, or
+     * every entity of a bare type (nearest first). */
+    private static List<Object> resolveEntities(Object client, String spec) {
         if (SelectorResolver.isSelector(spec)) {
-            List<Object> matches = SelectorResolver.resolve(client, spec);
-            return matches.isEmpty() ? null : matches.get(0);
+            return SelectorResolver.resolve(client, spec);
         }
         if (spec.matches("-?\\d+")) {
+            Object entity = null;
             try {
-                return Mc.entityByNetworkId(client, Integer.parseInt(spec));
+                entity = Mc.entityByNetworkId(client, Integer.parseInt(spec));
             } catch (NumberFormatException overflow) {
-                return null;
+                // out of int range -> no such id
             }
+            return entity == null ? List.of() : List.of(entity);
         }
         Object byUuid = Mc.entityByUuid(client, spec);
-        if (byUuid != null) return byUuid;
-        return Mc.nearestEntityOfType(client, spec.indexOf(':') >= 0 ? spec : "minecraft:" + spec);
+        if (byUuid != null) return List.of(byUuid);
+        String type = spec.indexOf(':') >= 0 ? spec : "minecraft:" + spec;
+        return SelectorResolver.resolve(client, "@e[type=" + type + ",sort=nearest]");
+    }
+
+    private static Object pickerLabel(Object client, Object entity) {
+        Object label = Txt.empty();
+        Txt.append(label, Txt.colored(Txt.copy(Mc.entityName(entity)), Txt.WHITE));
+        Txt.append(label, Txt.colored(Txt.literal("  " + Mc.entityId(entity)), Txt.GRAY));
+        Object self = Mc.player(client);
+        if (self != null) {
+            double dx = Mc.entityX(entity) - Mc.entityX(self);
+            double dy = Mc.entityY(entity) - Mc.entityY(self);
+            double dz = Mc.entityZ(entity) - Mc.entityZ(self);
+            double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            Txt.append(label, Txt.colored(Txt.literal(String.format(Locale.ROOT, "  (%.1fm)", distance)), Txt.DARK_GRAY));
+        }
+        return label;
     }
 
     private static int runBlockAt(FabricClientCommandSource source, int x, int y, int z) {

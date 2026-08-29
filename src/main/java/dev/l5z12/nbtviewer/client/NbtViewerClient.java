@@ -41,7 +41,7 @@ public final class NbtViewerClient implements ClientModInitializer {
         Object client = Mc.client();
         Mc.registerHud(new NbtHudOverlay(client, ConfigManager.get()));
         Mc.registerScreenScroll((screen, vertical) -> {
-            if (screen instanceof NbtViewerScreen s) s.scrollBy(vertical);
+            if (screen instanceof dev.l5z12.nbtviewer.client.gui.NbtScreenBase base) base.onScreenScroll(vertical);
         });
 
         ClientCommandRegistrationCallback.EVENT.register(

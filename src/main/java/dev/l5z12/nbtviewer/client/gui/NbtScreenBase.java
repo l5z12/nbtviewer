@@ -79,6 +79,11 @@ public abstract class NbtScreenBase extends Screen {
         return true;
     }
 
+    /** Mouse-wheel scroll, fed from the Fabric screen-scroll hook (its signature changed twice across
+     * the version range, so it's routed through the base). Override in scrollable screens. */
+    public void onScreenScroll(double vertical) {
+    }
+
     // ------------------------------------------------------------------ uniform accessors
     protected Object mc() {
         //? if yarn {

@@ -238,8 +238,8 @@ public final class NbtViewerScreen extends NbtScreenBase {
         clampScroll();
     }
 
-    /** Fed by the Fabric screen-scroll hook in {@code Mc.registerScreenScroll} (version-safe). */
-    public void scrollBy(double verticalAmount) {
+    @Override
+    public void onScreenScroll(double verticalAmount) {
         scrollRow -= (int) Math.signum(verticalAmount) * 3;
         clampScroll();
     }

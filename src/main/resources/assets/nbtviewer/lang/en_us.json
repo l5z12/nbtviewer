@@ -24,6 +24,8 @@
   "nbtviewer.gui.collapse_all": "Collapse All",
   "nbtviewer.gui.sort": "Sort: %s",
   "nbtviewer.gui.close": "Close",
+  "nbtviewer.picker.title": "Pick a target — %s",
+  "nbtviewer.picker.subtitle": "%s matches · click, or ↑↓ then Enter",
   "nbtviewer.gui.hint": "Click: expand/collapse  ·  ↑↓ ←→ navigate  ·  Ctrl+C copy node  ·  Ctrl+Shift+C copy path  ·  Ctrl+F search",
 
   "nbtviewer.status.expanded": "Expanded all",
