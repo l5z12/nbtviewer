@@ -52,6 +52,10 @@ done
 while IFS= read -r -d '' f; do prepend "$f" "#"; done < <(
   find scripts -name '*.sh' -print0 2>/dev/null)
 
+# GitHub Actions workflows
+while IFS= read -r -d '' f; do prepend "$f" "#"; done < <(
+  find .github/workflows -type f \( -name '*.yml' -o -name '*.yaml' \) -print0 2>/dev/null)
+
 # Properties: root + per-node pins (excludes the generated gradle/wrapper properties)
 prepend gradle.properties "#"
 while IFS= read -r -d '' f; do prepend "$f" "#"; done < <(

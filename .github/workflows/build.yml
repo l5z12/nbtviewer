@@ -1,0 +1,80 @@
+# SPDX-FileCopyrightText: 2026 l5z12
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.mc }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # yarn nodes (obfuscated) — Loom 1.17.20, JDK 21 targets release 17/21
+          - { mc: "1.20",    java: "21" }
+          - { mc: "1.20.1",  java: "21" }
+          - { mc: "1.20.2",  java: "21" }
+          - { mc: "1.20.3",  java: "21" }
+          - { mc: "1.20.4",  java: "21" }
+          - { mc: "1.20.5",  java: "21" }
+          - { mc: "1.20.6",  java: "21" }
+          - { mc: "1.21",    java: "21" }
+          - { mc: "1.21.1",  java: "21" }
+          - { mc: "1.21.2",  java: "21" }
+          - { mc: "1.21.3",  java: "21" }
+          - { mc: "1.21.4",  java: "21" }
+          - { mc: "1.21.5",  java: "21" }
+          - { mc: "1.21.6",  java: "21" }
+          - { mc: "1.21.7",  java: "21" }
+          - { mc: "1.21.8",  java: "21" }
+          - { mc: "1.21.9",  java: "21" }
+          - { mc: "1.21.10", java: "21" }
+          - { mc: "1.21.11", java: "21" }
+          # Mojmap nodes (official names) — Mojmap-native Loom, JDK 25 toolchain
+          - { mc: "26.1",    java: "25" }
+          - { mc: "26.2",    java: "25" }
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: ${{ matrix.java }}
+
+      - name: Drop the local build proxy
+        # gradle.properties routes downloads through a local Clash proxy (127.0.0.1:7890)
+        # for the author's machine; CI runners have direct internet, so strip those lines.
+        run: sed -i '/proxyHost/d;/proxyPort/d' gradle.properties
+
+      - name: Set up Gradle (dependency + build cache)
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build ${{ matrix.mc }}-fabric
+        run: |
+          chmod +x gradlew
+          ./gradlew :${{ matrix.mc }}-fabric:build --stacktrace
+
+      - name: Upload ${{ matrix.mc }} jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: nbtviewer-${{ matrix.mc }}
+          path: versions/${{ matrix.mc }}-fabric/build/libs/*.jar
+          if-no-files-found: error
