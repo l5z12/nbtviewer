@@ -115,9 +115,18 @@ part of the **same** tree — they just carry a `yarn=false` constant and their 
 serialization, `ClassTweaker`, `ClientCommands`).
 
 ### Switching the active (IDE) version
+
+Stonecutter registers one task per node. Switching rewrites the `//? if` guards in `src/` so the
+chosen version's branch is the active (uncommented) one — handy for IDE resolution:
+
 ```bash
-./gradlew "Set active project to 1.21.11-fabric"
+./gradlew "Set active project to 1.21.11-fabric"   # switch the IDE/source view to a node
+./gradlew "Refresh active project"                 # re-run the comment processor on the active node
+./gradlew "Reset active project"                   # back to 1.21.1-fabric — run this before committing
 ```
+
+The committed source is always at the `vcsVersion` (`1.21.1-fabric`); reset before you commit so the
+guard states are consistent in git.
 
 ---
 
