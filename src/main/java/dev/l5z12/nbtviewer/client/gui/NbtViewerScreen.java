@@ -4,13 +4,18 @@
 
 package dev.l5z12.nbtviewer.client.gui;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import dev.l5z12.nbtviewer.client.config.ConfigManager;
 import dev.l5z12.nbtviewer.client.config.CopyFormat;
 import dev.l5z12.nbtviewer.client.config.NbtViewerConfig;
+import dev.l5z12.nbtviewer.client.nbt.NbtExporter;
 import dev.l5z12.nbtviewer.client.nbt.NbtFormat;
 import dev.l5z12.nbtviewer.client.nbt.NbtText;
 import dev.l5z12.nbtviewer.client.target.NbtTarget;
@@ -40,14 +45,20 @@ public final class NbtViewerScreen extends NbtScreenBase {
     private int scrollRow;
     private int selectedIndex = -1;
     private String query = "";
+    /** Compiled query, or {@code null} when the box is empty or the regex is invalid. */
+    private Predicate<String> matcher;
+    private int matchCount;
+    private boolean searchError;
     private String status = "";
     private long statusUntil;
 
     private Object searchField;
     private Object sortButton;
+    private Object regexButton;
 
     // Layout (recomputed in init)
-    private int treeTop, treeBottom, treeLeft, treeRight, rowH;
+    private int treeTop, treeBottom, treeLeft, treeRight, rowH, searchBoxX;
+    private int buttonX, buttonY;
     private boolean draggingScrollbar;
 
     public NbtViewerScreen(Object parent, NbtTarget target) {
@@ -66,35 +77,52 @@ public final class NbtViewerScreen extends NbtScreenBase {
         treeLeft = 10;
         treeRight = this.width - 10;
 
-        // Search field (top-right)
-        int searchW = Math.min(200, this.width / 3);
-        searchField = Ui.editBox(font(), this.width - searchW - 10, 8, searchW, 16,
+        // Search field (top-right), with a regex toggle to its left.
+        int searchW = Math.min(190, this.width / 3);
+        searchBoxX = this.width - searchW - 10;
+        searchField = Ui.editBox(font(), searchBoxX, 8, searchW, 16,
                 Txt.translatable("nbtviewer.gui.search"));
         Ui.editMaxLength(searchField, 256);
         Ui.editValue(searchField, query);
         Ui.editResponder(searchField, this::onSearchChanged);
         addWidget(searchField);
 
-        // Bottom button row
-        int y = this.height - 24;
-        int x = treeLeft;
-        x = addButton(x, y, 70, Txt.translatable("nbtviewer.gui.copy_all"), this::copyAll);
-        x = addButton(x, y, 78, Txt.translatable("nbtviewer.gui.copy_node"), this::copySelected);
-        x = addButton(x, y, 74, Txt.translatable("nbtviewer.gui.copy_path"), this::copyPath);
-        x = addButton(x, y, 74, Txt.translatable("nbtviewer.gui.expand_all"), () -> setAllExpanded(true));
-        x = addButton(x, y, 82, Txt.translatable("nbtviewer.gui.collapse_all"), () -> setAllExpanded(false));
-        sortButton = Ui.button(sortLabel(), x + 4, y, 78, 20, this::toggleSort);
-        addWidget(sortButton);
-        x += 82;
-        addButton(x, y, 54, Txt.translatable("nbtviewer.gui.close"), this::closeSelf);
+        int regexW = 70;
+        regexButton = Ui.button(regexLabel(), searchBoxX - regexW - 4, 6, regexW, 20, this::toggleRegex);
+        addWidget(regexButton);
 
+        // Bottom button bar — laid out left-to-right, wrapping upward if it would overrun the panel.
+        buttonX = treeLeft;
+        buttonY = this.height - 24;
+        bar(70, Txt.translatable("nbtviewer.gui.copy_all"), this::copyAll);
+        bar(78, Txt.translatable("nbtviewer.gui.copy_node"), this::copySelected);
+        bar(64, Txt.translatable("nbtviewer.gui.copy_value"), this::copyValue);
+        bar(74, Txt.translatable("nbtviewer.gui.copy_path"), this::copyPath);
+        bar(56, Txt.translatable("nbtviewer.gui.save"), this::saveToFile);
+        bar(74, Txt.translatable("nbtviewer.gui.expand_all"), () -> setAllExpanded(true));
+        bar(82, Txt.translatable("nbtviewer.gui.collapse_all"), () -> setAllExpanded(false));
+        sortButton = barButton(78, sortLabel(), this::toggleSort);
+        addWidget(sortButton);
+        bar(54, Txt.translatable("nbtviewer.gui.close"), this::closeSelf);
+
+        rebuildMatcher();
         rebuildVisible();
         clampScroll();
     }
 
-    private int addButton(int x, int y, int w, Object text, Runnable action) {
-        addWidget(Ui.button(text, x + 4, y, w, 20, action));
-        return x + 4 + w;
+    /** Add a bottom-bar button, wrapping to a new row above when the panel width is exceeded. */
+    private void bar(int w, Object text, Runnable action) {
+        addWidget(barButton(w, text, action));
+    }
+
+    private Object barButton(int w, Object text, Runnable action) {
+        if (buttonX != treeLeft && buttonX + w > treeRight + 2) {
+            buttonX = treeLeft;
+            buttonY -= 24;
+        }
+        Object button = Ui.button(text, buttonX, buttonY, w, 20, action);
+        buttonX += w + 4;
+        return button;
     }
 
     // ------------------------------------------------------------------ rendering
@@ -113,6 +141,13 @@ public final class NbtViewerScreen extends NbtScreenBase {
         Object sub = Txt.colored(Txt.literal(
                 kindLabel() + "  ·  " + target.subtitle + "  ·  " + tags + " tags  ·  " + bytes + " B"), Txt.GRAY);
         Gfx.text(g, font(), sub, treeLeft, 22, 0xFFAAAAAA);
+
+        // Search feedback under the box: a match tally, or a note that the regex won't compile.
+        if (searchError) {
+            Gfx.text(g, font(), Txt.colored(Txt.translatable("nbtviewer.gui.regex_error"), Txt.RED), searchBoxX, 26, 0xFFFF5555);
+        } else if (matcher != null) {
+            Gfx.text(g, font(), Txt.colored(Txt.translatable("nbtviewer.gui.matches", matchCount), Txt.GRAY), searchBoxX, 26, 0xFFAAAAAA);
+        }
 
         // Tree panel
         Gfx.fill(g, treeLeft - 2, treeTop - 2, treeRight + 2, treeBottom + 2, 0x88000000);
@@ -145,7 +180,7 @@ public final class NbtViewerScreen extends NbtScreenBase {
         } else if (hovered) {
             Gfx.fill(g, treeLeft - 2, y - 1, treeRight + 2, y + rowH - 1, 0x30FFFFFF);
         }
-        if (!query.isEmpty() && node.matches(query)) {
+        if (matcher != null && node.matches(matcher)) {
             Gfx.fill(g, treeLeft - 2, y - 1, treeLeft, y + rowH - 1, 0xFFEEDD44);
         }
 
@@ -252,6 +287,14 @@ public final class NbtViewerScreen extends NbtScreenBase {
             if (shift) copyPath(); else copySelected();
             return true;
         }
+        if (ctrl && keyCode == GLFW.GLFW_KEY_B) {
+            copyValue();
+            return true;
+        }
+        if (ctrl && keyCode == GLFW.GLFW_KEY_S) {
+            saveToFile();
+            return true;
+        }
         if (ctrl && keyCode == GLFW.GLFW_KEY_F) {
             focus(searchField);
             Ui.editFocused(searchField, true);
@@ -263,8 +306,8 @@ public final class NbtViewerScreen extends NbtScreenBase {
         switch (keyCode) {
             case GLFW.GLFW_KEY_UP -> { moveSelection(-1); return true; }
             case GLFW.GLFW_KEY_DOWN -> { moveSelection(1); return true; }
-            case GLFW.GLFW_KEY_LEFT -> { collapseOrParent(); return true; }
-            case GLFW.GLFW_KEY_RIGHT -> { expandSelected(); return true; }
+            case GLFW.GLFW_KEY_LEFT -> { if (ctrl) collapseSubtree(); else collapseOrParent(); return true; }
+            case GLFW.GLFW_KEY_RIGHT -> { if (ctrl) expandSubtree(); else expandSelected(); return true; }
             case GLFW.GLFW_KEY_EQUAL, GLFW.GLFW_KEY_KP_ADD -> { expandSelected(); return true; }
             case GLFW.GLFW_KEY_MINUS, GLFW.GLFW_KEY_KP_SUBTRACT -> { collapseSelected(); return true; }
             case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER, GLFW.GLFW_KEY_SPACE -> { toggleSelected(); return true; }
@@ -275,32 +318,57 @@ public final class NbtViewerScreen extends NbtScreenBase {
     // ------------------------------------------------------------------ tree ops
 
     private void onSearchChanged(String text) {
-        query = text.toLowerCase(Locale.ROOT).trim();
+        query = text.trim();
+        rebuildMatcher();
         rebuildVisible();
         scrollRow = 0;
         clampScroll();
     }
 
+    /** (Re)compile the search box into a {@link #matcher}: a plain case-insensitive substring test,
+     * or a regex when the mode is on. An empty box or an un-compilable regex yields {@code null}. */
+    private void rebuildMatcher() {
+        searchError = false;
+        matchCount = 0;
+        if (query.isEmpty()) {
+            matcher = null;
+            return;
+        }
+        if (config.searchRegex) {
+            try {
+                Pattern pattern = Pattern.compile(query, Pattern.CASE_INSENSITIVE);
+                matcher = s -> pattern.matcher(s).find();
+            } catch (PatternSyntaxException invalid) {
+                searchError = true;
+                matcher = null;
+            }
+        } else {
+            String needle = query.toLowerCase(Locale.ROOT);
+            matcher = s -> s.toLowerCase(Locale.ROOT).contains(needle);
+        }
+    }
+
     private void rebuildVisible() {
         visible.clear();
-        if (query.isEmpty()) {
+        if (matcher == null) {
             root.collectVisible(visible, config.sortKeys);
         } else {
             for (NbtNode child : root.children(config.sortKeys)) {
-                collectFiltered(child, query, visible);
+                collectFiltered(child, matcher, visible);
             }
         }
+        matchCount = matcher == null ? 0 : countMatches(root, matcher);
         if (selectedIndex >= visible.size()) selectedIndex = visible.size() - 1;
     }
 
-    private boolean collectFiltered(NbtNode node, String q, List<NbtNode> out) {
+    private boolean collectFiltered(NbtNode node, Predicate<String> tester, List<NbtNode> out) {
         if (node.isContainer()) {
             List<NbtNode> childOut = new ArrayList<>();
             boolean childMatch = false;
             for (NbtNode child : node.children(config.sortKeys)) {
-                if (collectFiltered(child, q, childOut)) childMatch = true;
+                if (collectFiltered(child, tester, childOut)) childMatch = true;
             }
-            boolean selfMatch = node.matches(q);
+            boolean selfMatch = node.matches(tester);
             if (selfMatch || childMatch) {
                 out.add(node);
                 if (childMatch) {
@@ -310,11 +378,22 @@ public final class NbtViewerScreen extends NbtScreenBase {
                 return true;
             }
             return false;
-        } else if (node.matches(q)) {
+        } else if (node.matches(tester)) {
             out.add(node);
             return true;
         }
         return false;
+    }
+
+    /** Count nodes whose own key/value satisfies the tester (containers matched only by a descendant
+     * are not counted — this is the number of genuine hits, not rows shown). */
+    private int countMatches(NbtNode node, Predicate<String> tester) {
+        int count = 0;
+        for (NbtNode child : node.children(config.sortKeys)) {
+            if (child.matches(tester)) count++;
+            if (child.isContainer()) count += countMatches(child, tester);
+        }
+        return count;
     }
 
     private void setAllExpanded(boolean expanded) {
@@ -349,6 +428,26 @@ public final class NbtViewerScreen extends NbtScreenBase {
             node.expanded = false;
             rebuildVisible();
             clampScroll();
+        }
+    }
+
+    /** Expand the selected node and every descendant in one go (Ctrl+→). */
+    private void expandSubtree() {
+        NbtNode node = selected();
+        if (node != null && node.isContainer() && node.hasChildren()) {
+            node.setExpandedRecursive(true, config.sortKeys);
+            rebuildVisible();
+            ensureSelectedVisible();
+        }
+    }
+
+    /** Collapse the selected node and every descendant in one go (Ctrl+←). */
+    private void collapseSubtree() {
+        NbtNode node = selected();
+        if (node != null && node.isContainer()) {
+            node.setExpandedRecursive(false, config.sortKeys);
+            rebuildVisible();
+            ensureSelectedVisible();
         }
     }
 
@@ -388,6 +487,33 @@ public final class NbtViewerScreen extends NbtScreenBase {
         setClipboard(NbtFormat.toSnbt(value, config.copyFormat == CopyFormat.PRETTY, config.sortKeys));
     }
 
+    /** Copy just the leaf's value: a string with its SNBT quotes stripped, any other primitive as its
+     * literal, or (for a container) the whole subtree. Handy for pasting a raw id or UUID straight
+     * into a command without the surrounding quotes. */
+    private void copyValue() {
+        NbtNode node = selected();
+        if (node == null || node.isContainer()) {
+            copySelected();
+            return;
+        }
+        String leaf = Nbt.leafString(node.value);
+        setClipboard(Nbt.isString(node.value) ? NbtFormat.unquote(leaf) : leaf);
+    }
+
+    private void saveToFile() {
+        String snbt = NbtFormat.toSnbt(target.nbt, config.copyFormat == CopyFormat.PRETTY, config.sortKeys);
+        Path file = NbtExporter.write(exportLabel(), snbt);
+        if (file != null) {
+            setStatusText(Txt.str(Txt.translatable("nbtviewer.status.saved", file.getFileName().toString())));
+        } else {
+            setStatusText(Txt.str(Txt.translatable("nbtviewer.error.save_failed")));
+        }
+    }
+
+    private String exportLabel() {
+        return kindLabel() + "-" + target.subtitle;
+    }
+
     private void copyPath() {
         NbtNode node = selected();
         String path = node != null ? node.path() : "";
@@ -415,6 +541,21 @@ public final class NbtViewerScreen extends NbtScreenBase {
     private Object sortLabel() {
         return Txt.translatable("nbtviewer.gui.sort",
                 Txt.translatable(config.sortKeys ? "nbtviewer.on" : "nbtviewer.off"));
+    }
+
+    private void toggleRegex() {
+        config.searchRegex = !config.searchRegex;
+        ConfigManager.save();
+        Ui.setMessage(regexButton, regexLabel());
+        rebuildMatcher();
+        rebuildVisible();
+        scrollRow = 0;
+        clampScroll();
+    }
+
+    private Object regexLabel() {
+        return Txt.translatable("nbtviewer.gui.regex",
+                Txt.translatable(config.searchRegex ? "nbtviewer.on" : "nbtviewer.off"));
     }
 
     private String kindLabel() {
