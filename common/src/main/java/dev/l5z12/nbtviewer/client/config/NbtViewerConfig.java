@@ -32,6 +32,8 @@ public class NbtViewerConfig {
     // ------------------------------------------------------------------ GUI screen
     public int autoExpandDepth = 2;
     public boolean guiPauseGame = false;
+    /** When set, the viewer's search box is treated as a (case-insensitive) regular expression. */
+    public boolean searchRegex = false;
 
     // ------------------------------------------------------------------ targeting robustness
     // Entities move; a single-tick crosshair raycast often misses a fast/dodgy mob at the moment

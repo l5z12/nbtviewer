@@ -60,7 +60,15 @@ inspect an item straight from your inventory.
 ### Searchable, collapsible tree GUI
 - Full-screen NBT tree with **expand/collapse**, **search** (keys & values, auto-expands matches),
   keyboard navigation (`↑ ↓ ← →`, `+`/`-`, `Enter`), mouse-wheel + draggable scrollbar.
-- **Copy All**, **Copy Node** (selected subtree) and **Copy Path** (e.g. `blockEntity.Items[0].id`).
+- **Search modes**: plain substring or a case-insensitive **regular expression** (toggle *Regex* next
+  to the box); a live **match count** is shown under the box, or *invalid regex* while you type one.
+- **Recursive fold**: `Ctrl+←` / `Ctrl+→` collapse or expand the selected node **and all descendants**
+  at once (plain `←`/`→` still fold one level).
+- **Copy All**, **Copy Node** (selected subtree), **Copy Value** (`Ctrl+B` — the bare leaf value, e.g.
+  a string with its quotes stripped, ready to paste into a command) and **Copy Path**
+  (`Ctrl+Shift+C`, e.g. `blockEntity.Items[0].id`).
+- **Save** (`Ctrl+S`) writes the whole target's SNBT to a timestamped file under
+  `nbtviewer-exports/` in your game directory — the escape hatch for data too big for the clipboard.
 - Live stats: tag count and byte size.
 
 ### HUD overlay
@@ -71,12 +79,14 @@ inspect an item straight from your inventory.
 ### `/viewdata` command (alias `/nbtview`)
 ```
 /viewdata                      open the tree GUI for the auto target
-/viewdata item|held|slot|block|entity|auto [chat|gui|copy]
+/viewdata item|held|slot|block|entity|auto [chat|gui|copy|save]
 /viewdata copy                 copy the auto target's SNBT to the clipboard
+/viewdata save                 write the auto target's SNBT to a file in nbtviewer-exports/
 /viewdata overlay              toggle the HUD overlay
 /viewdata config               open the options screen
 ```
-`chat` prints coloured, pretty SNBT (capped to avoid flooding); `copy` puts SNBT on the clipboard.
+`chat` prints coloured, pretty SNBT (capped to avoid flooding); `copy` puts SNBT on the clipboard;
+`save` writes it to a timestamped `.snbt` file under `nbtviewer-exports/` in your game directory.
 
 **Specify a target explicitly** (no line of sight needed — handy for things you can't aim at):
 ```

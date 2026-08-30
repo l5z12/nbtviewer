@@ -24,6 +24,7 @@ import dev.l5z12.nbtviewer.client.config.NbtViewerConfig;
 import dev.l5z12.nbtviewer.client.gui.NbtConfigScreen;
 import dev.l5z12.nbtviewer.client.gui.NbtPickerScreen;
 import dev.l5z12.nbtviewer.client.gui.NbtViewerScreen;
+import dev.l5z12.nbtviewer.client.nbt.NbtExporter;
 import dev.l5z12.nbtviewer.client.nbt.NbtFormat;
 import dev.l5z12.nbtviewer.client.nbt.NbtText;
 import dev.l5z12.nbtviewer.client.target.NbtTarget;
@@ -38,7 +39,7 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
  * The command source is a Fabric type (mapping-agnostic); text is routed through {@link Mc}. */
 public final class ViewDataCommand {
 
-    private enum Mode { CHAT, GUI, COPY }
+    private enum Mode { CHAT, GUI, COPY, SAVE }
 
     private ViewDataCommand() {
     }
@@ -55,6 +56,8 @@ public final class ViewDataCommand {
                 .then(playerNode())
                 .then(Cmd.literal("copy")
                         .executes(ctx -> run(ctx.getSource(), HudSource.AUTO, Mode.COPY)))
+                .then(Cmd.literal("save")
+                        .executes(ctx -> run(ctx.getSource(), HudSource.AUTO, Mode.SAVE)))
                 .then(Cmd.literal("gui")
                         .executes(ctx -> run(ctx.getSource(), HudSource.AUTO, Mode.GUI)))
                 .then(Cmd.literal("overlay")
@@ -71,7 +74,8 @@ public final class ViewDataCommand {
                 .executes(ctx -> run(ctx.getSource(), source, Mode.CHAT))
                 .then(Cmd.literal("chat").executes(ctx -> run(ctx.getSource(), source, Mode.CHAT)))
                 .then(Cmd.literal("gui").executes(ctx -> run(ctx.getSource(), source, Mode.GUI)))
-                .then(Cmd.literal("copy").executes(ctx -> run(ctx.getSource(), source, Mode.COPY)));
+                .then(Cmd.literal("copy").executes(ctx -> run(ctx.getSource(), source, Mode.COPY)))
+                .then(Cmd.literal("save").executes(ctx -> run(ctx.getSource(), source, Mode.SAVE)));
     }
 
     private static int run(FabricClientCommandSource source, HudSource src, Mode mode) {
@@ -90,9 +94,23 @@ public final class ViewDataCommand {
                 Mc.setClipboard(client, snbt);
                 Mc.feedback(source, Txt.colored(Txt.translatable("nbtviewer.status.copied", snbt.length()), Txt.GREEN));
             }
+            case SAVE -> {
+                String snbt = NbtFormat.toSnbt(target.nbt, config.copyFormat == CopyFormat.PRETTY, config.sortKeys);
+                java.nio.file.Path file = NbtExporter.write(exportLabel(target), snbt);
+                if (file != null) {
+                    Mc.feedback(source, Txt.colored(
+                            Txt.translatable("nbtviewer.status.saved", file.getFileName().toString()), Txt.GREEN));
+                } else {
+                    Mc.cmdError(source, Txt.translatable("nbtviewer.error.save_failed"));
+                }
+            }
             case CHAT -> printToChat(source, config, target);
         }
         return 1;
+    }
+
+    private static String exportLabel(NbtTarget target) {
+        return target.kind.name().toLowerCase(Locale.ROOT) + "-" + target.subtitle;
     }
 
     private static void printToChat(FabricClientCommandSource source, NbtViewerConfig config, NbtTarget target) {

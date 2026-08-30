@@ -93,6 +93,30 @@ public final class NbtFormat {
         return keyNeedsQuote(key) ? quote(key) : key;
     }
 
+    /**
+     * Inverse of {@link #quote}: strip the surrounding quotes and un-escape an SNBT string literal.
+     * Minecraft only ever escapes the backslash and the chosen quote character, so a single-pass
+     * un-escape is exact. A value that is not a quoted literal is returned unchanged.
+     */
+    public static String unquote(String s) {
+        if (s.length() >= 2) {
+            char q = s.charAt(0);
+            if ((q == '"' || q == '\'') && s.charAt(s.length() - 1) == q) {
+                StringBuilder sb = new StringBuilder(s.length() - 2);
+                for (int i = 1; i < s.length() - 1; i++) {
+                    char c = s.charAt(i);
+                    if (c == '\\' && i + 1 < s.length() - 1) {
+                        sb.append(s.charAt(++i));
+                    } else {
+                        sb.append(c);
+                    }
+                }
+                return sb.toString();
+            }
+        }
+        return s;
+    }
+
     public static String quote(String s) {
         StringBuilder sb = new StringBuilder(s.length() + 2);
         sb.append('"');

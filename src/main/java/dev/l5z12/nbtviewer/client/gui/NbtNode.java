@@ -6,7 +6,7 @@ package dev.l5z12.nbtviewer.client.gui;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
+import java.util.function.Predicate;
 
 import dev.l5z12.nbtviewer.client.nbt.NbtFormat;
 import dev.l5z12.nbtviewer.facade.Nbt;
@@ -111,10 +111,13 @@ public final class NbtNode {
         return sb.toString();
     }
 
-    public boolean matches(String lowerQuery) {
-        if (key.toLowerCase(Locale.ROOT).contains(lowerQuery)) return true;
+    /** Whether this node's own key, or (for a leaf) its value, satisfies the search {@code tester}.
+     * The tester encapsulates the mode — plain substring or compiled regex — so the tree stays
+     * ignorant of how the query was entered. */
+    public boolean matches(Predicate<String> tester) {
+        if (tester.test(key)) return true;
         if (!isContainer()) {
-            return Nbt.leafString(value).toLowerCase(Locale.ROOT).contains(lowerQuery);
+            return tester.test(Nbt.leafString(value));
         }
         return false;
     }
