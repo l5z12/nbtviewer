@@ -336,7 +336,7 @@ public final class NbtViewerScreen extends NbtScreenBase {
         }
         if (config.searchRegex) {
             try {
-                Pattern pattern = Pattern.compile(query, Pattern.CASE_INSENSITIVE);
+                Pattern pattern = Pattern.compile(query, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
                 matcher = s -> pattern.matcher(s).find();
             } catch (PatternSyntaxException invalid) {
                 searchError = true;

@@ -6,8 +6,10 @@ package dev.l5z12.nbtviewer.client.nbt;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -36,16 +38,27 @@ public final class NbtExporter {
     }
 
     /**
-     * Writes {@code snbt} to a new file whose name is derived from {@code label} plus a timestamp.
-     * Returns the created path, or {@code null} if writing failed (logged, never thrown).
+     * Writes {@code snbt} to a <em>new</em> file whose name is derived from {@code label} plus a
+     * timestamp. Uses {@code CREATE_NEW} so an existing export is never truncated; if the same label
+     * is saved more than once within a single second, a {@code -2}, {@code -3}, … suffix is appended
+     * until a free name is found. Returns the created path, or {@code null} on failure (logged).
      */
     public static Path write(String label, String snbt) {
+        byte[] bytes = snbt.getBytes(StandardCharsets.UTF_8);
         try {
             Path dir = directory();
             Files.createDirectories(dir);
-            Path file = dir.resolve(sanitize(label) + "-" + LocalDateTime.now().format(STAMP) + ".snbt");
-            Files.write(file, snbt.getBytes(StandardCharsets.UTF_8));
-            return file;
+            String stem = sanitize(label) + "-" + LocalDateTime.now().format(STAMP);
+            for (int attempt = 1; attempt <= 1000; attempt++) {
+                Path file = dir.resolve(attempt == 1 ? stem + ".snbt" : stem + "-" + attempt + ".snbt");
+                try {
+                    return Files.write(file, bytes, StandardOpenOption.CREATE_NEW);
+                } catch (FileAlreadyExistsException collision) {
+                    // Same-second save with the same label — fall through and try the next suffix.
+                }
+            }
+            NbtViewer.LOGGER.warn("Could not find a free export filename for {} in {}", stem, directory());
+            return null;
         } catch (IOException | RuntimeException e) {
             NbtViewer.LOGGER.warn("Failed to export NBT to {}", directory(), e);
             return null;
