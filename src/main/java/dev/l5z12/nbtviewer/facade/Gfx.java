@@ -99,6 +99,25 @@ public final class Gfx {
         //?}
     }
 
+    /** Rendered width, in pixels, of a plain (unstyled) string. */
+    public static int textWidth(Object font, String s) {
+        //? if yarn {
+        return ((TextRenderer) font).getWidth(s);
+        //?} else {
+        /*return ((Font) font).width(s);*/
+        //?}
+    }
+
+    /** The longest prefix of {@code s} whose rendered width does not exceed {@code width} px. */
+    public static String trimToWidth(Object font, String s, int width) {
+        if (width <= 0) return "";
+        //? if yarn {
+        return ((TextRenderer) font).trimToWidth(s, width);
+        //?} else {
+        /*return ((Font) font).plainSubstrByWidth(s, width);*/
+        //?}
+    }
+
     public static int lineHeight(Object font) {
         //? if yarn {
         return ((TextRenderer) font).fontHeight;

@@ -20,12 +20,20 @@ import org.lwjgl.glfw.GLFW;
  */
 public final class NbtPickerScreen extends NbtScreenBase {
 
-    /** One selectable candidate: a display label and a lazily-built target (null if it went away). */
+    /** One coloured run of a row's label. Rows are drawn segment by segment so an over-long row can
+     * be truncated with an ellipsis at exactly the box edge, whatever the field lengths. */
+    public record Seg(String text, int color) {
+    }
+
+    /** One selectable candidate: a segmented display label and a lazily-built target (null if gone). */
     public interface Choice {
-        Object label();
+        List<Seg> label();
 
         NbtTarget build();
     }
+
+    private static final String ELLIPSIS = "…";
+    private static final int PAD = 4;
 
     private final Object parent;
     private final List<Choice> choices;
@@ -46,9 +54,18 @@ public final class NbtPickerScreen extends NbtScreenBase {
         rowH = Gfx.lineHeight(font()) + 6;
         listTop = 36;
         listBottom = this.height - 40;
-        int half = Math.min(200, this.width / 2 - 20);
-        listLeft = this.width / 2 - half;
-        listRight = this.width / 2 + half;
+        // Size the box to the content: wide enough for the widest row (plus padding), but never past
+        // the screen margins. Rows longer than the box are ellipsised in renderContent, so the box
+        // and its text always stay on screen no matter how long a name, id or coord string gets.
+        int margin = 20;
+        int maxBox = this.width - 2 * margin;
+        int widest = 0;
+        for (Choice choice : choices) {
+            widest = Math.max(widest, labelWidth(choice.label()));
+        }
+        int box = Math.max(160, Math.min(maxBox, widest + 2 * PAD + 4));
+        listLeft = (this.width - box) / 2;
+        listRight = listLeft + box;
         addWidget(Ui.button(Txt.translatable("nbtviewer.gui.close"),
                 this.width / 2 - 50, this.height - 28, 100, 20, this::closeSelf));
         clampScroll();
@@ -80,10 +97,42 @@ public final class NbtPickerScreen extends NbtScreenBase {
             } else if (hovered) {
                 Gfx.fill(g, listLeft - 2, y, listRight + 2, y + rowH - 1, 0x30FFFFFF);
             }
-            Gfx.text(g, font(), choices.get(index).label(), listLeft + 4, y + textOffset, 0xFFFFFFFF);
+            drawRow(g, choices.get(index).label(), y + textOffset);
         }
         Gfx.scissorOff(g);
         renderScrollbar(g);
+    }
+
+    /** Total rendered width of a row's segments, ignoring the box. */
+    private int labelWidth(List<Seg> label) {
+        int w = 0;
+        for (Seg s : label) {
+            w += Gfx.textWidth(font(), s.text());
+        }
+        return w;
+    }
+
+    /** Draw a row segment by segment within the box, ellipsising the segment that would overrun the
+     * right edge and dropping any that follow. Combined with the enclosing scissor, no glyph ever
+     * escapes the list — however long the name, id or coordinates are. */
+    private void drawRow(Object g, List<Seg> label, int y) {
+        int x = listLeft + PAD;
+        int limit = listRight - PAD;
+        int ellipsisW = Gfx.textWidth(font(), ELLIPSIS);
+        for (Seg s : label) {
+            int remaining = limit - x;
+            if (remaining <= 0) break;
+            int argb = 0xFF000000 | s.color();
+            int w = Gfx.textWidth(font(), s.text());
+            if (w <= remaining) {
+                Gfx.text(g, font(), Txt.literal(s.text()), x, y, argb);
+                x += w;
+            } else {
+                String fit = Gfx.trimToWidth(font(), s.text(), Math.max(0, remaining - ellipsisW));
+                Gfx.text(g, font(), Txt.literal(fit + ELLIPSIS), x, y, argb);
+                break;
+            }
+        }
     }
 
     private void renderScrollbar(Object g) {
