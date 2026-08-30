@@ -248,6 +248,10 @@ public final class ViewDataCommand {
         Object label = Txt.empty();
         Txt.append(label, Txt.colored(Txt.copy(Mc.entityName(entity)), Txt.WHITE));
         Txt.append(label, Txt.colored(Txt.literal("  " + Mc.entityId(entity)), Txt.GRAY));
+        Txt.append(label, Txt.colored(Txt.literal(String.format(Locale.ROOT, "  [%d, %d, %d]",
+                (int) Math.floor(Mc.entityX(entity)),
+                (int) Math.floor(Mc.entityY(entity)),
+                (int) Math.floor(Mc.entityZ(entity)))), Txt.DARK_AQUA));
         Object self = Mc.player(client);
         if (self != null) {
             double dx = Mc.entityX(entity) - Mc.entityX(self);
