@@ -1,5 +1,6 @@
 {
   "key.category.nbtviewer": "NBT Viewer",
+  "key.category.nbtviewer.general": "NBT Viewer",
   "key.nbtviewer.open_auto": "Open NBT (auto: block ▸ entity ▸ item)",
   "key.nbtviewer.open_held": "Open NBT of held item",
   "key.nbtviewer.open_slot": "Open NBT of hovered slot",

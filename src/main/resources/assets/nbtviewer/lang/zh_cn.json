@@ -1,5 +1,6 @@
 {
   "key.category.nbtviewer": "NBT 查看器",
+  "key.category.nbtviewer.general": "NBT 查看器",
   "key.nbtviewer.open_auto": "打开 NBT（自动：方块 ▸ 实体 ▸ 物品）",
   "key.nbtviewer.open_held": "打开手持物品的 NBT",
   "key.nbtviewer.open_slot": "打开指向槽位的 NBT",
