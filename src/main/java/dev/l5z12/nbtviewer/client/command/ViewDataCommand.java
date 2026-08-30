@@ -206,10 +206,10 @@ public final class ViewDataCommand {
         List<NbtPickerScreen.Choice> choices = new java.util.ArrayList<>();
         for (Object e : matches) {
             final Object entity = e;
-            final Object label = pickerLabel(client, entity);
+            final List<NbtPickerScreen.Seg> label = pickerLabel(client, entity);
             choices.add(new NbtPickerScreen.Choice() {
                 @Override
-                public Object label() {
+                public List<NbtPickerScreen.Seg> label() {
                     return label;
                 }
 
@@ -244,19 +244,26 @@ public final class ViewDataCommand {
         return SelectorResolver.resolve(client, "@e[type=" + type + ",sort=nearest]");
     }
 
-    private static Object pickerLabel(Object client, Object entity) {
-        Object label = Txt.empty();
-        Txt.append(label, Txt.colored(Txt.copy(Mc.entityName(entity)), Txt.WHITE));
-        Txt.append(label, Txt.colored(Txt.literal("  " + Mc.entityId(entity)), Txt.GRAY));
+    /** The picker row for one entity, as colour-tagged segments: name, id, absolute block coords and
+     * (if there is a client player) distance. Each is its own segment so the picker can ellipsise a
+     * row that is too wide without the fields bleeding out of the list. */
+    private static List<NbtPickerScreen.Seg> pickerLabel(Object client, Object entity) {
+        List<NbtPickerScreen.Seg> segs = new java.util.ArrayList<>();
+        segs.add(new NbtPickerScreen.Seg(Txt.str(Mc.entityName(entity)), Txt.WHITE));
+        segs.add(new NbtPickerScreen.Seg("  " + Mc.entityId(entity), Txt.GRAY));
+        segs.add(new NbtPickerScreen.Seg(String.format(Locale.ROOT, "  [%d, %d, %d]",
+                (int) Math.floor(Mc.entityX(entity)),
+                (int) Math.floor(Mc.entityY(entity)),
+                (int) Math.floor(Mc.entityZ(entity))), Txt.DARK_AQUA));
         Object self = Mc.player(client);
         if (self != null) {
             double dx = Mc.entityX(entity) - Mc.entityX(self);
             double dy = Mc.entityY(entity) - Mc.entityY(self);
             double dz = Mc.entityZ(entity) - Mc.entityZ(self);
             double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-            Txt.append(label, Txt.colored(Txt.literal(String.format(Locale.ROOT, "  (%.1fm)", distance)), Txt.DARK_GRAY));
+            segs.add(new NbtPickerScreen.Seg(String.format(Locale.ROOT, "  (%.1fm)", distance), Txt.DARK_GRAY));
         }
-        return label;
+        return segs;
     }
 
     private static int runBlockAt(FabricClientCommandSource source, int x, int y, int z) {
