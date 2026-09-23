@@ -16,6 +16,7 @@ import dev.l5z12.nbtviewer.client.config.ConfigManager;
 import dev.l5z12.nbtviewer.client.config.CopyFormat;
 import dev.l5z12.nbtviewer.client.config.NbtViewerConfig;
 import dev.l5z12.nbtviewer.client.nbt.NbtExporter;
+import dev.l5z12.nbtviewer.client.nbt.NbtCommands;
 import dev.l5z12.nbtviewer.client.nbt.NbtFormat;
 import dev.l5z12.nbtviewer.client.nbt.NbtText;
 import dev.l5z12.nbtviewer.client.target.NbtTarget;
@@ -98,6 +99,9 @@ public final class NbtViewerScreen extends NbtScreenBase {
         bar(78, Txt.translatable("nbtviewer.gui.copy_node"), this::copySelected);
         bar(64, Txt.translatable("nbtviewer.gui.copy_value"), this::copyValue);
         bar(74, Txt.translatable("nbtviewer.gui.copy_path"), this::copyPath);
+        if (NbtCommands.supported(target)) {
+            bar(108, Txt.translatable("nbtviewer.gui.copy_command", "/" + NbtCommands.name(target)), this::copyCommand);
+        }
         bar(56, Txt.translatable("nbtviewer.gui.save"), this::saveToFile);
         bar(74, Txt.translatable("nbtviewer.gui.expand_all"), () -> setAllExpanded(true));
         bar(82, Txt.translatable("nbtviewer.gui.collapse_all"), () -> setAllExpanded(false));
@@ -105,6 +109,7 @@ public final class NbtViewerScreen extends NbtScreenBase {
         addWidget(sortButton);
         bar(54, Txt.translatable("nbtviewer.gui.close"), this::closeSelf);
 
+        treeBottom = buttonY - 16;
         rebuildMatcher();
         rebuildVisible();
         clampScroll();
@@ -170,7 +175,7 @@ public final class NbtViewerScreen extends NbtScreenBase {
         } else {
             footer = Txt.colored(Txt.translatable("nbtviewer.gui.hint"), Txt.DARK_GRAY);
         }
-        Gfx.text(g, font(), footer, treeLeft, this.height - 38, 0xFF808080);
+        Gfx.text(g, font(), footer, treeLeft, buttonY - 12, 0xFF808080);
     }
 
     private void renderRow(Object g, NbtNode node, int index, int y, int mouseX, int mouseY) {
@@ -476,6 +481,10 @@ public final class NbtViewerScreen extends NbtScreenBase {
     }
 
     // ------------------------------------------------------------------ copy
+
+    private void copyCommand() {
+        setClipboard(NbtCommands.create(target));
+    }
 
     private void copyAll() {
         setClipboard(NbtFormat.toSnbt(target.nbt, config.copyFormat == CopyFormat.PRETTY, config.sortKeys));

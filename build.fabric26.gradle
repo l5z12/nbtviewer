@@ -27,6 +27,8 @@ sourceSets.main.java.srcDir("$rootDir/common/src/main/java")
 sourceSets.main.resources.srcDir("$rootDir/common/src/main/resources")
 
 dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.11.4'
     minecraft "com.mojang:minecraft:${stonecutter.current.version}"
     // Unobfuscated 26.x: no mappings dependency; plain implementation (Loom auto-remaps).
     implementation "net.fabricmc:fabric-loader:${project.property('deps.fabric_loader')}"
@@ -35,6 +37,11 @@ dependencies {
     if (project.findProperty('deps.modmenu') != null) {
         compileOnly "maven.modrinth:modmenu:${project.property('deps.modmenu')}"
     }
+}
+
+test {
+    useJUnitPlatform()
+    workingDir layout.buildDirectory.get().asFile
 }
 
 loom {

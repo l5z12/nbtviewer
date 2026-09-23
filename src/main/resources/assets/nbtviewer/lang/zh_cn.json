@@ -22,6 +22,8 @@
   "nbtviewer.gui.copy_node": "复制节点",
   "nbtviewer.gui.copy_value": "复制值",
   "nbtviewer.gui.copy_path": "复制路径",
+  "nbtviewer.gui.copy_command": "复制 %s",
+  "nbtviewer.error.command_unsupported": "无法召唤此实体类型",
   "nbtviewer.gui.save": "保存",
   "nbtviewer.gui.expand_all": "全部展开",
   "nbtviewer.gui.collapse_all": "全部折叠",

@@ -25,6 +25,7 @@ import dev.l5z12.nbtviewer.client.gui.NbtConfigScreen;
 import dev.l5z12.nbtviewer.client.gui.NbtPickerScreen;
 import dev.l5z12.nbtviewer.client.gui.NbtViewerScreen;
 import dev.l5z12.nbtviewer.client.nbt.NbtExporter;
+import dev.l5z12.nbtviewer.client.nbt.NbtCommands;
 import dev.l5z12.nbtviewer.client.nbt.NbtFormat;
 import dev.l5z12.nbtviewer.client.nbt.NbtText;
 import dev.l5z12.nbtviewer.client.target.NbtTarget;
@@ -39,7 +40,7 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
  * The command source is a Fabric type (mapping-agnostic); text is routed through {@link Mc}. */
 public final class ViewDataCommand {
 
-    private enum Mode { CHAT, GUI, COPY, SAVE }
+    private enum Mode { CHAT, GUI, COPY, COMMAND, SAVE }
 
     private ViewDataCommand() {
     }
@@ -56,6 +57,8 @@ public final class ViewDataCommand {
                 .then(playerNode())
                 .then(Cmd.literal("copy")
                         .executes(ctx -> run(ctx.getSource(), HudSource.AUTO, Mode.COPY)))
+                .then(Cmd.literal("command")
+                        .executes(ctx -> run(ctx.getSource(), HudSource.AUTO, Mode.COMMAND)))
                 .then(Cmd.literal("save")
                         .executes(ctx -> run(ctx.getSource(), HudSource.AUTO, Mode.SAVE)))
                 .then(Cmd.literal("gui")
@@ -75,6 +78,7 @@ public final class ViewDataCommand {
                 .then(Cmd.literal("chat").executes(ctx -> run(ctx.getSource(), source, Mode.CHAT)))
                 .then(Cmd.literal("gui").executes(ctx -> run(ctx.getSource(), source, Mode.GUI)))
                 .then(Cmd.literal("copy").executes(ctx -> run(ctx.getSource(), source, Mode.COPY)))
+                .then(Cmd.literal("command").executes(ctx -> run(ctx.getSource(), source, Mode.COMMAND)))
                 .then(Cmd.literal("save").executes(ctx -> run(ctx.getSource(), source, Mode.SAVE)));
     }
 
@@ -93,6 +97,15 @@ public final class ViewDataCommand {
                 String snbt = NbtFormat.toSnbt(target.nbt, config.copyFormat == CopyFormat.PRETTY, config.sortKeys);
                 Mc.setClipboard(client, snbt);
                 Mc.feedback(source, Txt.colored(Txt.translatable("nbtviewer.status.copied", snbt.length()), Txt.GREEN));
+            }
+            case COMMAND -> {
+                if (!NbtCommands.supported(target)) {
+                    Mc.cmdError(source, Txt.translatable("nbtviewer.error.command_unsupported"));
+                    return 0;
+                }
+                String command = NbtCommands.create(target);
+                Mc.setClipboard(client, command);
+                Mc.feedback(source, Txt.colored(Txt.translatable("nbtviewer.status.copied", command.length()), Txt.GREEN));
             }
             case SAVE -> {
                 String snbt = NbtFormat.toSnbt(target.nbt, config.copyFormat == CopyFormat.PRETTY, config.sortKeys);

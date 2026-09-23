@@ -37,6 +37,8 @@ repositories {
 }
 
 dependencies {
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.11.4")
     minecraft("com.mojang:minecraft:$mcVersion")
     mappings("net.fabricmc:yarn:${property("deps.yarn")}:v2")
     modImplementation("net.fabricmc:fabric-loader:$loaderDep")
@@ -47,6 +49,11 @@ dependencies {
     (findProperty("deps.modmenu") as String?)?.let {
         modCompileOnly("maven.modrinth:modmenu:$it")
     }
+}
+
+tasks.test {
+    useJUnitPlatform()
+    workingDir(layout.buildDirectory.get().asFile)
 }
 
 loom {

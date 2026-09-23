@@ -22,6 +22,8 @@
   "nbtviewer.gui.copy_node": "Copy Node",
   "nbtviewer.gui.copy_value": "Copy Value",
   "nbtviewer.gui.copy_path": "Copy Path",
+  "nbtviewer.gui.copy_command": "Copy %s",
+  "nbtviewer.error.command_unsupported": "This entity type cannot be summoned",
   "nbtviewer.gui.save": "Save",
   "nbtviewer.gui.expand_all": "Expand All",
   "nbtviewer.gui.collapse_all": "Collapse All",

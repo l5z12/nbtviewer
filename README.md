@@ -67,6 +67,12 @@ inspect an item straight from your inventory.
 - **Copy All**, **Copy Node** (selected subtree), **Copy Value** (`Ctrl+B` — the bare leaf value, e.g.
   a string with its quotes stripped, ready to paste into a command) and **Copy Path**
   (`Ctrl+Shift+C`, e.g. `blockEntity.Items[0].id`).
+- **Copy /give**, **Copy /setblock**, or **Copy /summon**, depending on the inspected type.
+  Commands preserve the available item tags/components, block states and NBT, or entity NBT.
+  `/give` targets `@s`; placement and summoning use `~ ~ ~`. Entity UUIDs (including passengers)
+  and original positions are omitted so copies can spawn at the command location. Players and
+  fishing bobbers have no summon action. Commands only use data available to the viewer; executing
+  them requires the usual game permissions.
 - **Save** (`Ctrl+S`) writes the whole target's SNBT to a timestamped file under
   `nbtviewer-exports/` in your game directory — the escape hatch for data too big for the clipboard.
 - Live stats: tag count and byte size.
@@ -79,7 +85,8 @@ inspect an item straight from your inventory.
 ### `/viewdata` command (alias `/nbtview`)
 ```
 /viewdata                      open the tree GUI for the auto target
-/viewdata item|held|slot|block|entity|auto [chat|gui|copy|save]
+/viewdata item|held|slot|block|entity|auto [chat|gui|copy|command|save]
+/viewdata command              copy the matching give/setblock/summon command
 /viewdata copy                 copy the auto target's SNBT to the clipboard
 /viewdata save                 write the auto target's SNBT to a file in nbtviewer-exports/
 /viewdata overlay              toggle the HUD overlay
