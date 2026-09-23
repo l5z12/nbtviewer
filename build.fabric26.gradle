@@ -8,7 +8,7 @@
 // friction. Shared code comes from the Stonecutter-processed root src/ (its //? if yarn guards select
 // the Mojmap branch here) + common/.
 plugins {
-    id 'net.fabricmc.fabric-loom' version '1.16-SNAPSHOT'
+    id 'net.fabricmc.fabric-loom' version '1.17.20'
 }
 
 base {
@@ -61,7 +61,7 @@ java {
 
 processResources {
     def props = ['version': project.version, 'mcDep': stonecutter.current.version,
-                 'loaderDep': '0.16.0', 'accessWidener': 'nbtviewer.classtweaker']
+                 'loaderDep': project.property('deps.fabric_loader'), 'accessWidener': 'nbtviewer.classtweaker']
     inputs.properties props
     filesMatching('fabric.mod.json') { expand props }
     // Ship only the ClassTweaker on 26.x, never the yarn access widener.

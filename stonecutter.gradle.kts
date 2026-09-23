@@ -23,6 +23,6 @@ stonecutter.parameters {
 // Build every Fabric version node at once (CI "build all"):  ./gradlew chiseledBuild
 tasks.register("chiseledBuild") {
     group = "project"
-    description = "Builds every Stonecutter Fabric version node (1.20 – 1.21.11)."
+    description = "Builds every Stonecutter Fabric version node (1.20 – 26.3)."
     dependsOn(stonecutter.tasks.named("build").map { it.values })
 }

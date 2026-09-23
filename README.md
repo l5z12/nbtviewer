@@ -9,12 +9,12 @@ server you see exactly what was synced to you), and in singleplayer / on servers
 mod it can pull the full block-entity & entity NBT.
 
 > Multi-version project built with [Stonecutter](https://stonecutter.kikugie.dev/) — **one single
-> tree** for **21 Minecraft versions, 1.20 → 26.2**, nodes named `<mc>-fabric`:
+> tree** for **22 Minecraft versions, 1.20 → 26.3**, nodes named `<mc>-fabric`:
 > - yarn (obfuscated): **1.20 through 1.21.11** — 19 nodes, JDK 17/21, `build.gradle.kts`.
-> - Mojmap (official names): **26.1, 26.2** — JDK 25, their own `build.fabric26.gradle`.
+> - Mojmap (official names): **26.1, 26.2, 26.3** — JDK 25, their own `build.fabric26.gradle`.
 >
 > Both mapping worlds live in the same `src/`. Every version and mapping difference is funnelled
-> through a small **facade package** (`Txt`/`Nbt`/`Gfx`/`Ui`/`Mc`/`Cmd`) plus `NbtScreenBase`, carrying
+> through a small **facade package** (`Txt`/`Nbt`/`Gfx`/`Ui`/`Mc`/`Cmd`/`Keys`) plus `NbtScreenBase`, carrying
 > `//? if yarn` guards; the logic files name no Minecraft type and are written once against `Object`.
 > Full details — the facades, the API-generation boundaries (1.20.5 / 1.21.5 / 1.21.6 / 1.21.9 / 26.x)
 > and the layout — are in **[MULTIVERSION.md](MULTIVERSION.md)**.
@@ -150,7 +150,7 @@ export GRADLE_OPTS="-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=7890 \
 ./gradlew :1.20.1-fabric:build
 
 # Build a 26.x version (Mojmap) — requires JDK 25:
-JAVA_HOME=/path/to/jdk-25 ./gradlew :26.2-fabric:build      # or :26.1-fabric:build
+JAVA_HOME=/path/to/jdk-25 ./gradlew :26.3-fabric:build      # or :26.1-fabric:build
 
 # Build every version at once (matching JDKs must be discoverable by Gradle toolchains):
 ./gradlew chiseledBuild
@@ -181,10 +181,10 @@ guard states are consistent in git.
 ## Project layout (Stonecutter)
 
 ```
-settings.gradle.kts           registers every node 1.20-fabric … 26.2-fabric in one tree
+settings.gradle.kts           registers every node 1.20-fabric … 26.3-fabric in one tree
 stonecutter.gradle.kts        active node + fabric/yarn constants + chiseledBuild
 build.gradle.kts              yarn node buildscript (Loom 1.17.20, JDK 17/21)
-build.fabric26.gradle         26.x node buildscript (Mojmap Loom 1.16-SNAPSHOT, JDK 25)
+build.fabric26.gradle         26.x node buildscript (Mojmap Loom 1.17.20, JDK 25)
 gradle.properties             mod id/version + proxy
 versions/<mc>-fabric/gradle.properties   per-node dependency pins (yarn, fabric api, jade, modmenu)
 

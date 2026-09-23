@@ -4,7 +4,7 @@
 
 package dev.l5z12.nbtviewer.client.keybind;
 
-import org.lwjgl.glfw.GLFW;
+import dev.l5z12.nbtviewer.facade.Keys;
 
 //? if yarn {
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -52,17 +52,17 @@ public final class NbtKeyBindings {
     }
 
     public static void register() {
-        openAuto = reg("open_auto", GLFW.GLFW_KEY_N);
-        openHeldItem = reg("open_held", GLFW.GLFW_KEY_UNKNOWN);
-        openHoveredSlot = reg("open_slot", GLFW.GLFW_KEY_UNKNOWN);
-        openTargetBlock = reg("open_block", GLFW.GLFW_KEY_UNKNOWN);
-        openTargetEntity = reg("open_entity", GLFW.GLFW_KEY_UNKNOWN);
-        copyAuto = reg("copy_auto", GLFW.GLFW_KEY_UNKNOWN);
-        copyHeldItem = reg("copy_held", GLFW.GLFW_KEY_UNKNOWN);
-        toggleOverlay = reg("toggle_overlay", GLFW.GLFW_KEY_UNKNOWN);
-        cycleOverlaySource = reg("cycle_overlay_source", GLFW.GLFW_KEY_UNKNOWN);
-        holdOverlay = reg("hold_overlay", GLFW.GLFW_KEY_UNKNOWN);
-        openConfig = reg("open_config", GLFW.GLFW_KEY_UNKNOWN);
+        openAuto = reg("open_auto", Keys.N);
+        openHeldItem = reg("open_held", Keys.UNKNOWN);
+        openHoveredSlot = reg("open_slot", Keys.UNKNOWN);
+        openTargetBlock = reg("open_block", Keys.UNKNOWN);
+        openTargetEntity = reg("open_entity", Keys.UNKNOWN);
+        copyAuto = reg("copy_auto", Keys.UNKNOWN);
+        copyHeldItem = reg("copy_held", Keys.UNKNOWN);
+        toggleOverlay = reg("toggle_overlay", Keys.UNKNOWN);
+        cycleOverlaySource = reg("cycle_overlay_source", Keys.UNKNOWN);
+        holdOverlay = reg("hold_overlay", Keys.UNKNOWN);
+        openConfig = reg("open_config", Keys.UNKNOWN);
     }
 
     private static Object reg(String name, int key) {
@@ -72,6 +72,9 @@ public final class NbtKeyBindings {
         //?} else if yarn {
         return KeyBindingHelper.registerKeyBinding(new KeyBinding("key.nbtviewer." + name,
                 InputUtil.Type.KEYSYM, key, (String) CATEGORY));
+        //?} else if >=26.3 {
+        /*return KeyMappingHelper.registerKeyMapping(new KeyMapping("key.nbtviewer." + name,
+                InputConstants.Type.KEYBOARD, key, (net.minecraft.client.KeyMapping.Category) CATEGORY));*/
         //?} else {
         /*return KeyMappingHelper.registerKeyMapping(new KeyMapping("key.nbtviewer." + name,
                 InputConstants.Type.KEYSYM, key, (net.minecraft.client.KeyMapping.Category) CATEGORY));*/

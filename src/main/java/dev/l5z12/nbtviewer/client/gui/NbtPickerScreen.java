@@ -11,7 +11,7 @@ import dev.l5z12.nbtviewer.facade.Gfx;
 import dev.l5z12.nbtviewer.facade.Mc;
 import dev.l5z12.nbtviewer.facade.Txt;
 import dev.l5z12.nbtviewer.facade.Ui;
-import org.lwjgl.glfw.GLFW;
+import dev.l5z12.nbtviewer.facade.Keys;
 
 /**
  * A scrollable chooser shown when a lookup (a selector, or a bare entity type) matches more than one
@@ -164,9 +164,9 @@ public final class NbtPickerScreen extends NbtScreenBase {
     @Override
     protected boolean onKeyPressed(int keyCode, int modifiers) {
         switch (keyCode) {
-            case GLFW.GLFW_KEY_UP -> { move(-1); return true; }
-            case GLFW.GLFW_KEY_DOWN -> { move(1); return true; }
-            case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER, GLFW.GLFW_KEY_SPACE -> { open(selectedIndex); return true; }
+            case Keys.UP -> { move(-1); return true; }
+            case Keys.DOWN -> { move(1); return true; }
+            case Keys.ENTER, Keys.KP_ENTER, Keys.SPACE -> { open(selectedIndex); return true; }
             default -> { return false; }
         }
     }

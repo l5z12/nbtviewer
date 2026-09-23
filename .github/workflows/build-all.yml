@@ -4,7 +4,7 @@
 
 name: Build all
 
-# Full matrix — every one of the 21 nodes. Manual only: the routine push/PR check
+# Full matrix — every one of the 22 nodes. Manual only: the routine push/PR check
 # (build.yml) already covers every guard boundary, so run this before a release or
 # when you want to verify the whole ladder end to end.
 on:
@@ -42,9 +42,10 @@ jobs:
           # Mojmap nodes (official names) — JDK 25 toolchain
           - { mc: "26.1",    java: "25" }
           - { mc: "26.2",    java: "25" }
+          - { mc: "26.3",    java: "25" }
     uses: ./.github/workflows/_build.yml
     with:
       mc: ${{ matrix.mc }}
       java: ${{ matrix.java }}
-      # Don't let 21 nodes evict the routine subset's warm caches.
+      # Don't let 22 nodes evict the routine subset's warm caches.
       cache-read-only: true

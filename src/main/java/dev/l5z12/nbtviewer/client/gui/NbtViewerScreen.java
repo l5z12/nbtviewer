@@ -25,7 +25,7 @@ import dev.l5z12.nbtviewer.facade.Mc;
 import dev.l5z12.nbtviewer.facade.Nbt;
 import dev.l5z12.nbtviewer.facade.Txt;
 import dev.l5z12.nbtviewer.facade.Ui;
-import org.lwjgl.glfw.GLFW;
+import dev.l5z12.nbtviewer.facade.Keys;
 
 /**
  * Full-screen, searchable, collapsible NBT tree view with copy-to-clipboard. Written once against
@@ -286,21 +286,21 @@ public final class NbtViewerScreen extends NbtScreenBase {
 
     @Override
     protected boolean onKeyPressed(int keyCode, int modifiers) {
-        boolean ctrl = (modifiers & GLFW.GLFW_MOD_CONTROL) != 0;
-        boolean shift = (modifiers & GLFW.GLFW_MOD_SHIFT) != 0;
-        if (ctrl && keyCode == GLFW.GLFW_KEY_C) {
+        boolean ctrl = (modifiers & Keys.CONTROL) != 0;
+        boolean shift = (modifiers & Keys.SHIFT) != 0;
+        if (ctrl && keyCode == Keys.C) {
             if (shift) copyPath(); else copySelected();
             return true;
         }
-        if (ctrl && keyCode == GLFW.GLFW_KEY_B) {
+        if (ctrl && keyCode == Keys.B) {
             copyValue();
             return true;
         }
-        if (ctrl && keyCode == GLFW.GLFW_KEY_S) {
+        if (ctrl && keyCode == Keys.S) {
             saveToFile();
             return true;
         }
-        if (ctrl && keyCode == GLFW.GLFW_KEY_F) {
+        if (ctrl && keyCode == Keys.F) {
             focus(searchField);
             Ui.editFocused(searchField, true);
             return true;
@@ -309,13 +309,13 @@ public final class NbtViewerScreen extends NbtScreenBase {
             return false; // let the base fall through to vanilla so the text field receives the key
         }
         switch (keyCode) {
-            case GLFW.GLFW_KEY_UP -> { moveSelection(-1); return true; }
-            case GLFW.GLFW_KEY_DOWN -> { moveSelection(1); return true; }
-            case GLFW.GLFW_KEY_LEFT -> { if (ctrl) collapseSubtree(); else collapseOrParent(); return true; }
-            case GLFW.GLFW_KEY_RIGHT -> { if (ctrl) expandSubtree(); else expandSelected(); return true; }
-            case GLFW.GLFW_KEY_EQUAL, GLFW.GLFW_KEY_KP_ADD -> { expandSelected(); return true; }
-            case GLFW.GLFW_KEY_MINUS, GLFW.GLFW_KEY_KP_SUBTRACT -> { collapseSelected(); return true; }
-            case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER, GLFW.GLFW_KEY_SPACE -> { toggleSelected(); return true; }
+            case Keys.UP -> { moveSelection(-1); return true; }
+            case Keys.DOWN -> { moveSelection(1); return true; }
+            case Keys.LEFT -> { if (ctrl) collapseSubtree(); else collapseOrParent(); return true; }
+            case Keys.RIGHT -> { if (ctrl) expandSubtree(); else expandSelected(); return true; }
+            case Keys.EQUAL, Keys.KP_ADD -> { expandSelected(); return true; }
+            case Keys.MINUS, Keys.KP_SUBTRACT -> { collapseSelected(); return true; }
+            case Keys.ENTER, Keys.KP_ENTER, Keys.SPACE -> { toggleSelected(); return true; }
             default -> { return false; }
         }
     }

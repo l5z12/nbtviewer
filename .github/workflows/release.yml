@@ -41,6 +41,7 @@ jobs:
           - { mc: "1.21.11", java: "21" }
           - { mc: "26.1",    java: "25" }
           - { mc: "26.2",    java: "25" }
+          - { mc: "26.3",    java: "25" }
     uses: ./.github/workflows/_build.yml
     with:
       mc: ${{ matrix.mc }}

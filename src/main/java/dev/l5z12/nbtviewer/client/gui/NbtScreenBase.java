@@ -8,9 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dev.l5z12.nbtviewer.facade.Ui;
-import org.lwjgl.glfw.GLFW;
 
 //? if yarn {
+import org.lwjgl.glfw.GLFW;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.text.Text;

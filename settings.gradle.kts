@@ -15,8 +15,8 @@ plugins {
     id("dev.kikugie.stonecutter") version "0.9.7"
 }
 
-// One Stonecutter tree for the whole Fabric range 1.20 – 26.2. Every mapping/version divergence is
-// funnelled through the facade package (Txt/Nbt/Gfx/Ui/Mc/Cmd) and NbtScreenBase, so the logic is
+// One Stonecutter tree for the whole Fabric range 1.20 – 26.3. Every mapping/version divergence is
+// funnelled through the facade package (Txt/Nbt/Gfx/Ui/Mc/Cmd/Keys) and NbtScreenBase, so the logic is
 // written once against Object; the `//? if yarn` guards there switch between yarn (obfuscated, mc<26)
 // and Mojmap (official names, 26.x). The 26.x nodes carry a `yarn=false` constant and their own
 // Groovy buildscript (build.fabric26.gradle) — Mojmap-native Loom on JDK 25, no intermediary — while
@@ -24,6 +24,7 @@ plugins {
 stonecutter {
     create(rootProject) {
         // Minecraft 26.x: unobfuscated (official names) on the Mojmap-native Loom + JDK 25.
+        version("26.3-fabric", "26.3").buildscript("build.fabric26.gradle")
         version("26.2-fabric", "26.2").buildscript("build.fabric26.gradle")
         version("26.1-fabric", "26.1").buildscript("build.fabric26.gradle")
         version("1.21.11-fabric", "1.21.11")

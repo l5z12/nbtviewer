@@ -26,7 +26,7 @@ concurrency:
   cancel-in-progress: true
 
 # Fast routine check: one node per //? if guard boundary (covers every branch in the
-# codebase) rather than all 21. Run the full matrix from build-all.yml on demand.
+# codebase) rather than all 22. Run the full matrix from build-all.yml on demand.
 jobs:
   build:
     strategy:
@@ -40,7 +40,8 @@ jobs:
           - { mc: "1.21.9",  java: "21" }   # KeyInput/Click, KeyBinding.Category, 6-arg scroll
           - { mc: "1.21.11", java: "21" }   # latest yarn
           - { mc: "26.1",    java: "25" }   # Mojmap
-          - { mc: "26.2",    java: "25" }   # latest Mojmap
+          - { mc: "26.2",    java: "25" }   # GLFW Mojmap
+          - { mc: "26.3",    java: "25" }   # SDL scancodes and key bindings
     uses: ./.github/workflows/_build.yml
     with:
       mc: ${{ matrix.mc }}
